@@ -50,6 +50,12 @@ import SubscriptionAlert from './components/SubscriptionAlert';
 // 환경변수 상수
 const REACT_APP_GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
+// Google OAuth 설정 디버깅
+console.log('🔍 Google OAuth Debug Info:');
+console.log('- Current origin:', window.location.origin);
+console.log('- Google Client ID:', REACT_APP_GOOGLE_CLIENT_ID ? '설정됨' : '설정되지 않음');
+console.log('- Client ID 길이:', REACT_APP_GOOGLE_CLIENT_ID ? REACT_APP_GOOGLE_CLIENT_ID.length : 0);
+
 // 구독 상태 확인 함수
 const checkSubscriptionAccess = (user) => {
   if (!user) return false;

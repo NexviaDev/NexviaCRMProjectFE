@@ -1,7 +1,10 @@
 import axios from "axios";
 
+// 환경변수에서 백엔드 URL 가져오기
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
 const api = axios.create({
-  baseURL: `http://localhost:5000/api`,
+  baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -57,7 +60,7 @@ api.interceptors.response.use(
 
 // CSV 업로드용 긴 타임아웃 API 인스턴스
 export const apiWithLongTimeout = axios.create({
-  baseURL: `http://localhost:5000/api`,
+  baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },

@@ -351,8 +351,17 @@ const LoginPage = () => {
   };
 
   // 구글 로그인 실패 처리
-  const handleGoogleError = () => {
-    setError("Google 로그인에 실패했습니다. 다시 시도해주세요.");
+  const handleGoogleError = (error) => {
+    console.error('Google OAuth Error:', error);
+    if (error.error === 'popup_closed_by_user') {
+      setError("로그인 창이 닫혔습니다. 다시 시도해주세요.");
+    } else if (error.error === 'access_denied') {
+      setError("Google 로그인 권한이 거부되었습니다.");
+    } else if (error.error === 'invalid_client') {
+      setError("Google OAuth 설정에 문제가 있습니다. 관리자에게 문의하세요.");
+    } else {
+      setError("Google 로그인에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   // 탈퇴된 계정 복구 모달 표시
@@ -418,7 +427,7 @@ const LoginPage = () => {
                   width="300"
                   auto_select={false}
                   use_fedcm_for_prompt={false}
-                  cancel_on_tap_outside={false}
+                  cancel_on_tap_outside={true}
                   style={{
                     height: '48px',
                     fontSize: '14px',
