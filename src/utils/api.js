@@ -1,7 +1,16 @@
 import axios from "axios";
 
 // 환경변수에서 백엔드 URL 가져오기
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 
+                   (window.env && window.env.REACT_APP_BACKEND_URL) || 
+                   'http://localhost:5000';
+
+// 디버깅을 위한 로그
+console.log('🔍 Backend URL:', BACKEND_URL);
+console.log('🔍 Environment:', process.env.NODE_ENV);
+console.log('🔍 Process env REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
+console.log('🔍 Window env REACT_APP_BACKEND_URL:', window.env?.REACT_APP_BACKEND_URL);
+console.log('🔍 All env vars:', process.env);
 
 const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
