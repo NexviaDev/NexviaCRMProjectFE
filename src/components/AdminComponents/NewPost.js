@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner, Modal } from 'react-bootstrap';
-import axios from 'axios';
+import api from '../../utils/api';
 
 const NewPost = () => {
   const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ const NewPost = () => {
   // 뉴스 목록 불러오기
   const fetchNewsList = async () => {
     try {
-      const response = await axios.get('/api/news');
+      const response = await api.get('/news');
       if (response.data.success && response.data.data) {
         setNewsList(response.data.data);
       } else {
@@ -52,10 +52,10 @@ const NewPost = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      const url = editingId ? `/api/news/${editingId}` : '/api/news';
+      const url = editingId ? `/news/${editingId}` : '/news';
       const method = editingId ? 'put' : 'post';
       
-      const response = await axios[method](url, formData);
+      const response = await api[method](url, formData);
       
       if (response.data.success) {
         setMessage({
@@ -103,7 +103,7 @@ const NewPost = () => {
   const handleDelete = async (id) => {
     if (window.confirm('정말로 이 뉴스를 삭제하시겠습니까?')) {
       try {
-        const response = await axios.delete(`/api/news/${id}`);
+        const response = await api.delete(`/news/${id}`);
         if (response.data.success) {
           setMessage({
             type: 'success',
