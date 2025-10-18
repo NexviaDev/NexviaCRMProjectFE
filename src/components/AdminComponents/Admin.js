@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import AdminUsers from './AdminUsers';
 import SubscriptionHistory from './SubscriptionHistory';
 import CompanyManagement from './CompanyManagement';
+import NewPost from './NewPost';
 
 const Admin = () => {
     const navigate = useNavigate();
@@ -15,6 +16,7 @@ const Admin = () => {
         if (path.includes('/admin/users')) return 'users';
         if (path.includes('/admin/subscription-history')) return 'subscription-history';
         if (path.includes('/admin/companies')) return 'companies';
+        if (path.includes('/admin/news')) return 'news';
         return 'users'; // 기본값
     };
 
@@ -59,6 +61,16 @@ const Admin = () => {
                                 회사 관리
                             </Nav.Link>
                         </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link 
+                                eventKey="news"
+                                active={getActiveTab() === 'news'}
+                                onClick={() => handleTabClick('news')}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                뉴스 관리
+                            </Nav.Link>
+                        </Nav.Item>
                     </Nav>
                 </Col>
 
@@ -68,6 +80,7 @@ const Admin = () => {
                         <Route path="users" element={<AdminUsers />} />
                         <Route path="subscription-history" element={<SubscriptionHistory />} />
                         <Route path="companies" element={<CompanyManagement />} />
+                        <Route path="news" element={<NewPost />} />
                         <Route path="" element={<Navigate to="users" replace />} />
                     </Routes>
                 </Col>

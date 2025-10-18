@@ -41,6 +41,10 @@ const Home = () => {
     // 최근 활동 데이터 (실제 스케줄에서 가져옴)
     const [recentActivities, setRecentActivities] = useState([]);
 
+    // 뉴스 데이터
+    const [latestNews, setLatestNews] = useState([]);
+    const [newsLoading, setNewsLoading] = useState(true);
+
     // 페이지네이션 상태
     const [todaySchedulesPage, setTodaySchedulesPage] = useState(1);
     const [recentActivitiesPage, setRecentActivitiesPage] = useState(1);
@@ -271,6 +275,22 @@ const Home = () => {
         }
     };
 
+    // 최신 뉴스 가져오기
+    const fetchLatestNews = async () => {
+        try {
+            setNewsLoading(true);
+            const response = await api.get('/news?limit=15&sortBy=registrationDate&sortOrder=desc');
+            
+            if (response.data.success) {
+                setLatestNews(response.data.data);
+            }
+        } catch (error) {
+            console.error('최신 뉴스 조회 오류:', error);
+        } finally {
+            setNewsLoading(false);
+        }
+    };
+
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth <= 768);
@@ -284,6 +304,7 @@ const Home = () => {
             fetchStats();
             fetchTodaySchedules();
             fetchRecentActivities();
+            fetchLatestNews();
         }
 
         return () => window.removeEventListener('resize', handleResize);
@@ -759,6 +780,115 @@ const Home = () => {
                                 <div className="text-center py-3">
                                     <FaClock size={24} className="text-muted mb-2" />
                                     <p className="text-muted mb-0">최근 활동이 없습니다.</p>
+                                </div>
+                            )}
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+
+            {/* 최신 뉴스 섹션 */}
+            <Row className="mb-4">
+                <Col md={12}>
+                    <Card className="shadow-sm">
+                        <Card.Header>
+                            <div className="d-flex justify-content-between align-items-center">
+                                <h5 className="mb-0">📰 최신 뉴스</h5>
+                                <Button
+                                    variant="outline-secondary"
+                                    size="sm"
+                                    onClick={fetchLatestNews}
+                                    disabled={newsLoading}
+                                >
+                                    {newsLoading ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            새로고침 중...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaChartLine className="me-2" />
+                                            새로고침
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </Card.Header>
+                        <Card.Body>
+                            {newsLoading ? (
+                                <div className="text-center py-4">
+                                    <div className="spinner-border text-primary" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p className="text-muted mt-2">뉴스를 불러오는 중...</p>
+                                </div>
+                            ) : latestNews.length > 0 ? (
+                                <div className="row">
+                                    {latestNews.slice(0, 15).map((news, index) => (
+                                        <div key={news._id} className="col-md-4 col-sm-6 mb-3">
+                                            <Card 
+                                                className="h-100 border-0 shadow-sm transition-all"
+                                                style={{ 
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = 'translateY(-3px)';
+                                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
+                                                }}
+                                                onClick={() => window.open(news.link || news.linkUrl, '_blank')}
+                                            >
+                                                <Card.Body className="p-3">
+                                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                                        <Badge bg="primary" className="small">
+                                                            #{index + 1}
+                                                        </Badge>
+                                                        <small className="text-muted">
+                                                            {new Date(news.registrationDate).toLocaleDateString('ko-KR')}
+                                                        </small>
+                                                    </div>
+                                                    <h6 className="card-title mb-2" style={{ 
+                                                        fontSize: '0.95rem',
+                                                        lineHeight: '1.4',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        overflow: 'hidden'
+                                                    }}>
+                                                        {news.title}
+                                                    </h6>
+                                                    <p className="card-text text-muted small mb-2" style={{
+                                                        fontSize: '0.85rem',
+                                                        lineHeight: '1.3',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        overflow: 'hidden'
+                                                    }}>
+                                                        {news.subtitle}
+                                                    </p>
+                                                    <div className="d-flex justify-content-between align-items-center">
+                                                        <small className="text-primary">
+                                                            <i className="fas fa-external-link-alt me-1"></i>
+                                                            링크 보기
+                                                        </small>
+                                                        <small className="text-muted">
+                                                            {new Date(news.createdAt).toLocaleDateString('ko-KR')}
+                                                        </small>
+                                                    </div>
+                                                </Card.Body>
+                                            </Card>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <i className="fas fa-newspaper text-muted" style={{ fontSize: '2rem' }}></i>
+                                    <p className="text-muted mt-2 mb-0">등록된 뉴스가 없습니다.</p>
                                 </div>
                             )}
                         </Card.Body>
