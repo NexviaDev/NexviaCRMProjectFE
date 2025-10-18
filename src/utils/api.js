@@ -1,9 +1,17 @@
 import axios from "axios";
 
 // 환경변수에서 백엔드 URL 가져오기
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 
-                   (window.env && window.env.REACT_APP_BACKEND_URL) || 
-                   'http://localhost:5000';
+let BACKEND_URL;
+
+if (process.env.NODE_ENV === 'production') {
+  // 프로덕션 환경에서는 무조건 Heroku URL 사용
+  BACKEND_URL = 'https://nexviacrmproject-backend-f8b1e684656c.herokuapp.com';
+} else {
+  // 개발 환경에서는 환경변수 또는 로컬호스트 사용
+  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 
+                 (window.env && window.env.REACT_APP_BACKEND_URL) || 
+                 'http://localhost:5000';
+}
 
 // 디버깅을 위한 로그
 console.log('🔍 Backend URL:', BACKEND_URL);
