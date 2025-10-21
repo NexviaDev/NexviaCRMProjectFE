@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "부동산 CRM 프론트엔드 React 애플리케이션",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-brands-svg-icons": "^7.0.0",
