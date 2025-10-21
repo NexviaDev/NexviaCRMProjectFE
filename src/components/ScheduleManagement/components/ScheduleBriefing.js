@@ -16,9 +16,7 @@ const ScheduleBriefing = ({ user }) => {
             setLoading(true);
             setError('');
             
-            const response = await api.get('/schedule-briefing/weekly-briefing', {
-                timeout: 180000 // 3분 타임아웃
-            });
+            const response = await api.get('/schedule-briefing/weekly-briefing');
             
             if (response.data.success) {
                 setBriefingData({
@@ -46,9 +44,7 @@ const ScheduleBriefing = ({ user }) => {
             setLoading(true);
             setError('');
             
-            const response = await api.get('/schedule-briefing/daily-briefing', {
-                timeout: 180000 // 3분 타임아웃
-            });
+            const response = await api.get('/schedule-briefing/daily-briefing');
             
             if (response.data.success) {
                 setBriefingData({
@@ -76,9 +72,7 @@ const ScheduleBriefing = ({ user }) => {
             setLoading(true);
             setError('');
             
-            const response = await api.get('/schedule-briefing/analysis', {
-                timeout: 180000 // 3분 타임아웃
-            });
+            const response = await api.get('/schedule-briefing/analysis');
             
             if (response.data.success) {
                 setBriefingData({
@@ -189,6 +183,13 @@ const ScheduleBriefing = ({ user }) => {
 
                 {/* 브리핑 생성 버튼 */}
                 <div className="text-center mb-4">
+                    <div className="mb-3">
+                        <small className="text-muted">
+                            {activeTab === 'weekly' && '📝 금주 브리핑: 최대 3,000자 내외'}
+                            {activeTab === 'daily' && '📝 오늘 브리핑: 최대 1,500자 내외'}
+                            {activeTab === 'analysis' && '📊 일정 분석: 상세한 분석 보고서'}
+                        </small>
+                    </div>
                     <Button
                         variant="primary"
                         size="lg"
@@ -223,6 +224,9 @@ const ScheduleBriefing = ({ user }) => {
                                         {briefingData.type === 'daily' && '🌅 오늘의 업무 브리핑'}
                                         {briefingData.type === 'analysis' && '📊 일정 분석 보고서'}
                                     </h5>
+                                    <small className="text-muted">
+                                        글자 수: {(briefingData.data.briefing || briefingData.data.analysis || '').length}자
+                                    </small>
                                 </Col>
                                 <Col className="text-end">
                                     <Button
