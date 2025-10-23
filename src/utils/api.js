@@ -74,6 +74,9 @@ export const apiWithUnlimitedTimeout = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
   },
   timeout: 300000, // 5분 타임아웃 (무제한 대신 충분히 긴 시간)
 });
