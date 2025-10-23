@@ -19,10 +19,27 @@ const ScheduleBriefing = ({ user }) => {
             const response = await apiWithUnlimitedTimeout.get('/schedule-briefing/weekly-briefing');
 
             if (response.data.success) {
-                setBriefingData({
-                    type: 'weekly',
-                    data: response.data.data
-                });
+                if (response.data.data.status === 'processing') {
+                    // 백그라운드 처리 중인 경우
+                    setBriefingData({
+                        type: 'weekly',
+                        data: {
+                            status: 'processing',
+                            message: response.data.data.message
+                        }
+                    });
+                    
+                    // 3초 후 자동으로 새로고침하여 결과 확인
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    // 정상적인 브리핑 데이터인 경우
+                    setBriefingData({
+                        type: 'weekly',
+                        data: response.data.data
+                    });
+                }
             } else {
                 setError('브리핑 생성에 실패했습니다.');
             }
