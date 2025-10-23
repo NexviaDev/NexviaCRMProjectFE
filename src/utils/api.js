@@ -69,13 +69,13 @@ api.interceptors.response.use(
   }
 );
 
-// 브리핑 생성용 무제한 타임아웃 API 인스턴스
+// 브리핑 생성용 긴 타임아웃 API 인스턴스 (무제한 타임아웃은 브라우저에서 문제 발생 가능)
 export const apiWithUnlimitedTimeout = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 0, // 무제한 타임아웃 (AI 브리핑 생성용)
+  timeout: 300000, // 5분 타임아웃 (무제한 대신 충분히 긴 시간)
 });
 
 // CSV 업로드용 긴 타임아웃 API 인스턴스
