@@ -76,7 +76,6 @@ const PropertyCSVUploadModal = ({ showModal, onHide, onSuccess }) => {
                         },
                         complete: (results) => {
                             if (results.errors.length > 0) {
-                                console.log('CSV 파싱 오류:', results.errors);
                                 setError('CSV 파일 파싱 중 오류가 발생했습니다. 파일 형식을 확인해주세요.');
                                 return;
                             }
@@ -85,22 +84,15 @@ const PropertyCSVUploadModal = ({ showModal, onHide, onSuccess }) => {
                             const expectedHeaders = ['매물유형', '매매가격', '월세가격', '월세보증금', '전세가격', '면적', '방개수', '욕실개수', '주소', '상세주소', '상태', '주차', '애완동물', '엘리베이터', '특이사항'];
                             const actualHeaders = results.data[1] || []; // 2행이 헤더
                             
-                            console.log('예상 헤더:', expectedHeaders);
-                            console.log('실제 헤더:', actualHeaders);
                             
-                            // 예시 데이터 제외 (1행 주의사항 + 2행 헤더 + 3행 예시 = 5행까지 제외)
-                            console.log('전체 CSV 데이터:', results.data);
-                            console.log('5행까지 제외 후 데이터:', results.data.slice(5));
                             
                             const actualData = results.data.slice(5);
                             
-                            console.log('필터링 전 데이터:', actualData);
                             
                             const processedData = actualData
                                 .filter(row => {
                                     // 배열 형태로 접근 (인덱스 기반)
                                     const hasData = row[8]; // 주소는 8번 인덱스
-                                    console.log('행 데이터:', row, '필터 결과:', hasData);
                                     return hasData;
                                 })
                                 .map((row, index) => {
@@ -108,26 +100,19 @@ const PropertyCSVUploadModal = ({ showModal, onHide, onSuccess }) => {
                                     let type = ['매매'];
                                     if (row[0]) { // 매물유형은 0번 인덱스 (수정됨)
                                         const typeStr = row[0].trim();
-                                        console.log(`행 ${index + 1} 매물유형 원본: "${typeStr}"`);
                                         
                                         // 쉼표로 구분된 여러 매물유형 처리
                                         if (typeStr.includes(',')) {
                                             type = typeStr.split(',').map(t => t.trim()).filter(t => t);
-                                            console.log(`행 ${index + 1} 쉼표 분리 결과:`, type);
                                         } else if (typeStr.includes('월세')) {
                                             type = ['월세'];
-                                            console.log(`행 ${index + 1} 월세 감지:`, type);
                                         } else if (typeStr.includes('전세')) {
                                             type = ['전세'];
-                                            console.log(`행 ${index + 1} 전세 감지:`, type);
                                         } else if (typeStr.includes('실거주')) {
                                             type = ['실거주'];
-                                            console.log(`행 ${index + 1} 실거주 감지:`, type);
                                         } else {
-                                            console.log(`행 ${index + 1} 기본값 사용:`, type);
                                         }
                                     } else {
-                                        console.log(`행 ${index + 1} 매물유형 없음, 기본값 사용:`, type);
                                     }
 
                                     // 가격 처리 (배열 인덱스 기반) - 새로운 prices 구조
@@ -161,16 +146,11 @@ const PropertyCSVUploadModal = ({ showModal, onHide, onSuccess }) => {
                                     };
                                 });
                             
-                            console.log('최종 처리된 데이터:', processedData);
-                            console.log('데이터 개수:', processedData.length);
                             
                             // 중복 매물명 검사
                             const duplicates = checkDuplicateTitles(processedData);
                             setDuplicateTitles(duplicates);
                             
-                            if (duplicates.length > 0) {
-                                console.log('중복 매물명 발견:', duplicates);
-                            }
                             
                             setParsedData(processedData);
                         },

@@ -13,19 +13,13 @@ if (process.env.NODE_ENV === 'production') {
                  'http://localhost:5000';
 }
 
-// 디버깅을 위한 로그
-console.log('🔍 Backend URL:', BACKEND_URL);
-console.log('🔍 Environment:', process.env.NODE_ENV);
-console.log('🔍 Process env REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
-console.log('🔍 Window env REACT_APP_BACKEND_URL:', window.env?.REACT_APP_BACKEND_URL);
-console.log('🔍 All env vars:', process.env);
 
 const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 120000, // 2분 타임아웃 설정 (AI 브리핑 대응)
+  timeout: 300000, // 5분 타임아웃 설정 (AI 브리핑 대응)
 });
 
 api.interceptors.request.use(
@@ -75,14 +69,67 @@ api.interceptors.response.use(
   }
 );
 
+// 브리핑 생성용 무제한 타임아웃 API 인스턴스
+export const apiWithUnlimitedTimeout = axios.create({
+  baseURL: `${BACKEND_URL}/api`,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 0, // 무제한 타임아웃 (AI 브리핑 생성용)
+});
+
 // CSV 업로드용 긴 타임아웃 API 인스턴스
 export const apiWithLongTimeout = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 120000, // 2분 타임아웃 설정 (대량 CSV 업로드용)
+  timeout: 300000, // 5분 타임아웃 설정 (대량 CSV 업로드용)
 });
+
+// 무제한 타임아웃 API에도 인터셉터 적용
+apiWithUnlimitedTimeout.interceptors.request.use(
+  (request) => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token) {
+      request.headers.Authorization = `Bearer ${token}`;
+    }
+    return request;
+  },
+  function (error) {
+    console.error('API 요청 오류:', error);
+    return Promise.reject(error);
+  }
+);
+
+apiWithUnlimitedTimeout.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  function (error) {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("sessionId");
+      
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register')) {
+        // React Router 사용을 위해 window.location 대신 에러만 전달
+        // UserContext에서 처리하도록 함
+      }
+    }
+    
+    if (error.code === 'ERR_NETWORK') {
+      console.error('네트워크 오류:', error.message);
+    } else if (error.response) {
+      console.error('API 응답 오류:', error.response.status, error.response.data);
+    } else {
+      console.error('API 오류:', error.message);
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // 긴 타임아웃 API에도 인터셉터 적용
 apiWithLongTimeout.interceptors.request.use(

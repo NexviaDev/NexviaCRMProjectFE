@@ -477,19 +477,16 @@ const CustomerRegistrationModal = ({
                     const customerName = duplicateCustomer ? duplicateCustomer.name : (editingCustomer ? editingCustomer.name : response.data.data.name);
                     const customerPhone = duplicateCustomer ? duplicateCustomer.phone : (editingCustomer ? editingCustomer.phone : response.data.data.phone);
 
-                    console.log('매물 소유자 변경 시작:', { customerId, customerName, customerPhone, selectedPropertiesCount: selectedProperties.length });
 
                     // 수정 모드인 경우 기존 고객의 모든 매물 소유권 해제
                     if (editingCustomer || duplicateCustomer) {
                         const existingCustomerId = editingCustomer?._id || duplicateCustomer?._id;
-                        console.log('기존 고객 매물 소유권 해제 시작:', existingCustomerId);
                         
                         if (existingCustomerId) {
                             try {
                                 // 기존 고객의 매물 목록 조회
                                 const customerResponse = await api.get(`/customers/${existingCustomerId}`);
                                 if (customerResponse.data.success && customerResponse.data.data.properties) {
-                                    console.log('기존 고객의 매물 수:', customerResponse.data.data.properties.length);
                                     
                                     // 기존 매물들의 소유권 해제
                                     for (const prop of customerResponse.data.data.properties) {
@@ -500,10 +497,6 @@ const CustomerRegistrationModal = ({
 
                                             // 현재 소유자가 수정 중인 고객인 경우에만 해제
                                             if (currentOwner && currentOwner._id === existingCustomerId) {
-                                                console.log(`매물 ${propertyId} 소유권 해제:`, { 
-                                                    currentOwner: currentOwner.name, 
-                                                    existingCustomer: customerResponse.data.data.name 
-                                                });
                                                 
                                                 await api.put(`/properties/${propertyId}/owner`, {
                                                     newOwnerId: null, // 소유권 해제
@@ -531,10 +524,6 @@ const CustomerRegistrationModal = ({
                             const propertyResponse = await api.get(`/properties/${prop.propertyId}`);
                             const currentOwner = propertyResponse.data.data.customer;
 
-                            console.log(`매물 ${prop.propertyId} 소유자 설정:`, { 
-                                newOwner: customerName, 
-                                currentOwner: currentOwner?.name || '없음' 
-                            });
 
                             const ownerResponse = await api.put(`/properties/${prop.propertyId}/owner`, {
                                 newOwnerId: customerId,
@@ -545,9 +534,7 @@ const CustomerRegistrationModal = ({
                             });
 
                             if (!ownerResponse.data.success) {
-                                console.error(`매물 ${prop.propertyId} 소유자 업데이트 실패:`, ownerResponse.data.message);
                             } else {
-                                console.log(`매물 ${prop.propertyId} 소유자 업데이트 성공`);
                                 
                                 // 매물 소유자 변경 ActivityLog 기록
                                 try {

@@ -4,7 +4,6 @@ import Papa from 'papaparse';
 import { apiWithLongTimeout } from '../../utils/api';
 
 const CustomerTemplateUploadModal = ({ show, onHide, onSuccess }) => {
-    console.log('CustomerTemplateUploadModal 렌더링됨, show:', show);
     
     const [csvData, setCsvData] = useState(null);
     const [parsedData, setParsedData] = useState([]);
@@ -220,10 +219,8 @@ const CustomerTemplateUploadModal = ({ show, onHide, onSuccess }) => {
         });
     };
 
-    console.log('CustomerTemplateUploadModal return, show:', show);
     
     if (!show) {
-        console.log('show가 false이므로 모달을 렌더링하지 않음');
         return null;
     }
     

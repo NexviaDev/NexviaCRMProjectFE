@@ -183,17 +183,6 @@ const SalesManagement = () => {
         return <Badge bg={status === '완료' ? 'success' : 'warning'}>{status}</Badge>;
     };
 
-    // 계약 수정/삭제 권한 확인
-    const canEditContract = (contract) => {
-        if (!user || !contract) return false;
-        if (contract.byCompanyNumber !== user.businessNumber) {
-            return false;
-        }
-        if (user.level >= 5) return true;
-        const isBuyer = contract.buyer && contract.buyer._id === user._id;
-        const isSeller = contract.seller && contract.seller._id === user._id;
-        return isBuyer || isSeller;
-    };
 
 
 
@@ -671,7 +660,7 @@ const SalesManagement = () => {
                 user={user}
             />
 
-            <style jsx>{`
+            <style>{`
                 /* 반응형 차트 스타일 */
                 .monthly-chart-responsive {
                     overflow-x: auto;

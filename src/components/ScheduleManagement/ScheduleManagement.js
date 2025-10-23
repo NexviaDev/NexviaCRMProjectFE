@@ -47,6 +47,7 @@ const ScheduleManagement = () => {
         };
         fetchData();
         scheduleData.fetchAllSchedules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters.filters]);
 
     // 페이지 변경 시 데이터 가져오기 (필터 변경이 아닌 경우에만)
@@ -58,17 +59,20 @@ const ScheduleManagement = () => {
             };
             fetchData();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mainPagination.currentPage]);
 
     // 선택된 날짜의 일정 총 개수 계산
     useEffect(() => {
         const allSchedulesForDate = getSchedulesForDate(viewMode.selectedDate, scheduleData.allSchedules);
         datePagination.updateTotalItems(allSchedulesForDate.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [viewMode.selectedDate, scheduleData.allSchedules]);
 
     // 선택된 날짜가 변경될 때 날짜 페이지 리셋
     useEffect(() => {
         datePagination.resetPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [viewMode.selectedDate]);
 
     // 컴포넌트 마운트 시 현재 날짜로 초기화
@@ -76,6 +80,7 @@ const ScheduleManagement = () => {
         const today = new Date();
         viewMode.setSelectedDate(today);
         viewMode.setCurrentMonth(today);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // 모달 관련 핸들러들
@@ -115,6 +120,16 @@ const ScheduleManagement = () => {
     const handleCloseMessageModal = () => {
         setShowMessageModal(false);
         setSelectedScheduleForMessage(null);
+    };
+
+    // 달력 날짜 더블클릭 핸들러 - 해당 날짜로 일정 등록 모달 열기
+    const handleDateDoubleClick = (date) => {
+        // 선택된 날짜를 설정하고 일정 등록 모달 열기
+        viewMode.setSelectedDate(date);
+        handleShowModal({ 
+            date: date.toISOString().split('T')[0], // YYYY-MM-DD 형식
+            time: '09:00' // 기본 시간 설정
+        });
     };
 
     // user가 로드되지 않은 경우 로딩 표시
@@ -273,6 +288,7 @@ const ScheduleManagement = () => {
                                             selectedDate={viewMode.selectedDate}
                                             onDateSelect={viewMode.setSelectedDate}
                                             allSchedules={scheduleData.allSchedules}
+                                            onDateDoubleClick={handleDateDoubleClick}
                                         />
                                     )}
                                     {viewMode.viewMode === 'week' && (

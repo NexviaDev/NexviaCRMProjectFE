@@ -399,10 +399,6 @@ const CustomerManagement = () => {
         }
     }, [type, navigate]);
 
-    // 디버깅용: 모달 상태 확인
-    useEffect(() => {
-        console.log('showTemplateUploadModal 상태:', showTemplateUploadModal);
-    }, [showTemplateUploadModal]);
 
     // URL 파라미터(type) 변경 시 데이터 새로고침
     useEffect(() => {
@@ -494,14 +490,12 @@ const CustomerManagement = () => {
 
         const newSelectedCustomers = new Set(selectedCustomers);
 
-        console.log('체크박스 클릭:', { customerId, index, shiftKey: event.shiftKey, lastSelectedIndex });
 
         if (event.shiftKey && lastSelectedIndex !== null) {
             // Shift 키를 누른 경우 범위 선택
             const start = Math.min(lastSelectedIndex, index);
             const end = Math.max(lastSelectedIndex, index);
 
-            console.log('범위 선택:', { start, end });
 
             for (let i = start; i <= end; i++) {
                 if (filteredCustomers[i]) {
@@ -552,21 +546,12 @@ const CustomerManagement = () => {
     // 페이지네이션 관련 함수들
     const totalPages = itemsPerPage === 'all' ? 1 : Math.max(1, Math.ceil(totalItems / parseInt(itemsPerPage)));
 
-    // 디버깅을 위한 콘솔 로그
-    console.log('페이지네이션 정보:', {
-        totalItems,
-        itemsPerPage,
-        totalPages,
-        currentPage,
-        loading
-    });
 
     const handlePageChange = (pageNumber, event) => {
         if (event) {
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('페이지 변경:', pageNumber);
         setCurrentPage(pageNumber);
         // 페이지 변경 시 선택된 고객들은 유지 (초기화하지 않음)
     };
@@ -576,7 +561,6 @@ const CustomerManagement = () => {
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('첫 페이지로 이동');
         setCurrentPage(1);
         // 페이지 변경 시 선택된 고객들은 유지 (초기화하지 않음)
     };
@@ -586,7 +570,6 @@ const CustomerManagement = () => {
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('마지막 페이지로 이동');
         setCurrentPage(totalPages);
         // 페이지 변경 시 선택된 고객들은 유지 (초기화하지 않음)
     };
@@ -596,7 +579,6 @@ const CustomerManagement = () => {
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('이전 페이지로 이동');
         setCurrentPage(prev => Math.max(prev - 1, 1));
         // 페이지 변경 시 선택된 고객들은 유지 (초기화하지 않음)
     };
@@ -606,7 +588,6 @@ const CustomerManagement = () => {
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('다음 페이지로 이동');
         setCurrentPage(prev => Math.min(prev + 1, totalPages));
         // 페이지 변경 시 선택된 고객들은 유지 (초기화하지 않음)
     };
@@ -616,11 +597,6 @@ const CustomerManagement = () => {
         setItemsPerPage(newItemsPerPage);
         setCurrentPage(1); // 첫 페이지로 리셋
         // 전체 보기 옵션 선택 시 페이지네이션 숨김
-        if (newItemsPerPage === 'all') {
-            console.log('전체 보기 모드로 변경');
-        } else {
-            console.log('페이지당 항목 수 변경:', newItemsPerPage);
-        }
     };
 
     // SMS 전송 핸들러
@@ -660,7 +636,6 @@ const CustomerManagement = () => {
 
         try {
             setLoading(true);
-            console.log('일괄 삭제 시작:', Array.from(selectedCustomers).length, '명');
 
             const response = await api.delete('/customers/bulk', {
                 data: {
@@ -1709,11 +1684,9 @@ const CustomerManagement = () => {
             <CustomerTemplateUploadModal
                 show={showTemplateUploadModal}
                 onHide={() => {
-                    console.log('양식 업로드 모달 닫기');
                     setShowTemplateUploadModal(false);
                 }}
                 onSuccess={() => {
-                    console.log('양식 업로드 성공');
                     fetchCustomers();
                     setShowTemplateUploadModal(false);
                 }}

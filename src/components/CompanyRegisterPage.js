@@ -12,7 +12,6 @@ const CompanyRegisterPage = ({
   user = null,  // 현재 가입 중인 사용자 정보
   isFromRegister = false  // RegisterPage에서 호출된 건지 여부
 }) => {
-  console.log('👤 CompanyRegisterPage에서 받은 user 정보:', user);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -92,13 +91,6 @@ const CompanyRegisterPage = ({
     setLoading(true);
     setError(null);
 
-    console.log('📤 CompanyRegisterPage에서 전송되는 데이터:', {
-      ...formData,
-      initialUserId: user?._id,
-      initialUserEmail: user?.email,
-      initialUserName: user?.name,
-      isInitialRegistration: true
-    });
 
     try {
       // 회사 등록 API 호출
@@ -110,7 +102,6 @@ const CompanyRegisterPage = ({
         isInitialRegistration: true  // 최초 등록임을 표시
       });
 
-      console.log('📥 회사 등록 응답:', response.data);
 
       if (response.data.success) {
         setSuccess(true);
@@ -118,9 +109,7 @@ const CompanyRegisterPage = ({
         const { company, userUpdate } = response.data.data || response.data;
         
         if (userUpdate && userUpdate.updated) {
-          console.log('✅ 사용자 레벨 업데이트 성공:', userUpdate);
         } else if (userUpdate && userUpdate.error) {
-          console.warn('⚠️ 사용자 레벨 업데이트 실패:', userUpdate.error);
         }
         
         // 성공 후 처리

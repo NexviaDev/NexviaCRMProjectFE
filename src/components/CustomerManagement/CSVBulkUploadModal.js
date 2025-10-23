@@ -128,7 +128,6 @@ const CSVBulkUploadModal = ({ showModal, onHide, onSuccess, customerType = '일�
                 const currentProgress = Math.round(((i + 1) / chunks.length) * 100);
                 setUploadProgress(currentProgress);
                 
-                console.log(`청크 ${i + 1}/${chunks.length} 업로드 중... (${chunk.length}개 항목)`);
 
                 try {
                     const response = await apiWithLongTimeout.post('/customers/bulk-csv', {
@@ -162,8 +161,6 @@ const CSVBulkUploadModal = ({ showModal, onHide, onSuccess, customerType = '일�
                         });
                     }
                 } catch (error) {
-                    console.error(`청크 ${i + 1} 업로드 오류:`, error);
-                    console.error('오류 상세:', error.response?.data);
                     
                     let errorMessage = '청크 업로드 실패';
                     if (error.code === 'ECONNABORTED') {

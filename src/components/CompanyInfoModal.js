@@ -20,23 +20,9 @@ const CompanyInfoModal = ({ show, onHide }) => {
                                 기본 정보
                             </h6>
                             <div className="ps-3">
-                                <p className="mb-1"><strong>등록번호:</strong> 780-20-01705</p>
-                                <p className="mb-1"><strong>상호:</strong> 넥스디</p>
-                                <p className="mb-1"><strong>성명:</strong> 김화영</p>
-                                <p className="mb-1"><strong>생년월일:</strong> 1985년 05월 13일</p>
-                            </div>
-                        </div>
-                        
-                        <div className="mb-3">
-                            <h6 className="text-primary mb-2">
-                                <FaCalendarAlt className="me-2" />
-                                사업 정보
-                            </h6>
-                            <div className="ps-3">
-                                <p className="mb-1"><strong>개업연월일:</strong> 2022년 07월 25일</p>
-                                <p className="mb-1"><strong>사업자 단위 과세:</strong> 부 (V)</p>
-                                <p className="mb-1"><strong>발급일자:</strong> 2025년 08월 25일</p>
-                                <p className="mb-1"><strong>발급기관:</strong> 김포세무서장</p>
+                                <p className="mb-1"><strong>등록번호:</strong> 541-86-03652</p>
+                                <p className="mb-1"><strong>상호:</strong> 넥스비아</p>
+                                <p className="mb-1"><strong>성명:</strong> 최현석</p>
                             </div>
                         </div>
                     </div>
@@ -48,7 +34,7 @@ const CompanyInfoModal = ({ show, onHide }) => {
                                 사업장 소재지
                             </h6>
                             <div className="ps-3">
-                                <p className="mb-1">인천광역시 강화군 길상면 길상로 98-12</p>
+                                <p className="mb-1">인천광역시 강화군 길상면 길상로 98-12, 2층</p>
                             </div>
                         </div>
                         

@@ -106,14 +106,6 @@ const CustomerScheduleHistoryModal = ({ showModal, onHide, customer, onEditSched
     };
 
     const handleEditSchedule = (schedule) => {
-        // 디버깅용 콘솔 로그
-        console.log('수정할 일정 정보:', {
-            scheduleId: schedule._id,
-            title: schedule.title,
-            publisher: schedule.publisher,
-            publisherBusinessNumber: schedule.publisher?.businessNumber,
-            currentUser: user ? { _id: user._id, level: user.level, businessNumber: user.businessNumber } : null
-        });
         
         setEditingSchedule(schedule);
         setShowScheduleModal(true);

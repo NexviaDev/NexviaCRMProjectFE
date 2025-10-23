@@ -220,25 +220,9 @@ const RegisterPage = () => {
       setIsLoading(true);
       setError('');
 
-      // 토큰 상태 확인
-      const token = sessionStorage.getItem("token");
-
       // nickname이 비어있으면 name과 동일하게 설정
       const finalNickname = formData.nickname.trim() || formData.name.trim();
 
-      // 디버깅: 전송되는 데이터 로그
-      console.log('📤 전송되는 데이터:', {
-        name: formData.name,
-        nickname: finalNickname,
-        companyName: formData.companyName,
-        businessNumber: formData.businessNumber,
-        businessAddress: formData.businessAddress,
-        detailedAddress: formData.detailedAddress,
-        contactNumber: formData.contactNumber,
-        birthDate: formData.birthDate,
-        gender: formData.gender,
-        position: formData.position
-      });
 
       // 사용자 정보 업데이트
       const response = await api.put('/user/update', {
@@ -257,10 +241,8 @@ const RegisterPage = () => {
       if (response.status === 200) {
         // 최초 회사 등록자인 경우 레벨 업데이트
         if (formData.isInitialCompanyRegistrant) {
-          console.log('🎯 최초 회사 등록자 감지 - 레벨 10 설정 API 호출');
           try {
             await api.put('/user/set-initial-company-admin');
-            console.log('✅ 최초 회사 관리자 레벨 설정 완료');
             setSuccess('추가 정보 입력이 완료되었습니다! 최초 관리자 레벨로 설정되었습니다.');
           } catch (levelError) {
             console.error('⚠️ 레벨 설정 실패:', levelError);
@@ -350,16 +332,14 @@ const RegisterPage = () => {
                   id="termsAgreement"
                   label={
                     <span>
-                      <a 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleShowTerms();
-                        }}
-                        className="text-decoration-none"
+                      <button 
+                        type="button"
+                        onClick={handleShowTerms}
+                        className="text-decoration-none border-0 bg-transparent p-0 text-primary"
+                        style={{ textDecoration: 'underline', cursor: 'pointer' }}
                       >
                         개인정보처리방침
-                      </a>
+                      </button>
                       에 동의합니다 (필수)
                     </span>
                   }
@@ -750,16 +730,14 @@ const RegisterPage = () => {
                     id="termsAgreementAdditional"
                     label={
                       <span>
-                        <a 
-                          href="#" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleShowTerms();
-                          }}
-                          className="text-decoration-none"
+                        <button 
+                          type="button"
+                          onClick={handleShowTerms}
+                          className="text-decoration-none border-0 bg-transparent p-0 text-primary"
+                          style={{ textDecoration: 'underline', cursor: 'pointer' }}
                         >
                           개인정보처리방침
-                        </a>
+                        </button>
                         에 동의합니다 (필수)
                       </span>
                     }

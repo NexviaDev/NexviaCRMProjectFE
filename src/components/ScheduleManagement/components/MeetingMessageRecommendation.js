@@ -16,9 +16,7 @@ const MeetingMessageRecommendation = ({ schedule, onClose }) => {
             setLoading(true);
             setError('');
             
-            const response = await api.get(`/schedule-briefing/meeting-message/${schedule._id}`, {
-                timeout: 180000 // 3분 타임아웃
-            });
+            const response = await api.get(`/schedule-briefing/meeting-message/${schedule._id}`);
             
             if (response.data.success) {
                 setMessageData(response.data.data);

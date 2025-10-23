@@ -84,14 +84,9 @@ const ActivityLogPage = () => {
             const params = new URLSearchParams(mappedFilters);
             const requestUrl = `/activity-logs?${params}`;
             
-            console.log('Request URL:', requestUrl);
-            console.log('Mapped Filters:', mappedFilters);
 
             const response = await api.get(requestUrl);
 
-            console.log('Activity Logs API Response:', response.data);
-            console.log('Activities:', response.data.data?.activities);
-            console.log('Pagination:', response.data.data?.pagination);
 
             if (response.data.success) {
                 setFilteredActivities(response.data.data.activities);
@@ -326,7 +321,7 @@ const ActivityLogPage = () => {
                                     </thead>
                                     <tbody>
                                         {details.successCustomers.slice(0, 20).map((customer, index) => (
-                                            <tr key={index}>
+                                            <tr key={`success-customer-${customer.name}-${index}`}>
                                                 <td>{customer.name}</td>
                                                 <td>{customer.type}</td>
                                             </tr>
@@ -348,7 +343,7 @@ const ActivityLogPage = () => {
                             <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                 <ListGroup>
                                     {details.failedCustomers.map((failed, index) => (
-                                        <ListGroup.Item key={index} variant="danger">
+                                        <ListGroup.Item key={`failed-customer-${failed.name}-${index}`} variant="danger">
                                             <strong>{failed.name}</strong>: {failed.error}
                                         </ListGroup.Item>
                                     ))}
@@ -571,7 +566,7 @@ const ActivityLogPage = () => {
                                     </thead>
                                     <tbody>
                                         {details.deletedCustomers.slice(0, 20).map((customer, index) => (
-                                            <tr key={index}>
+                                            <tr key={`deleted-customer-${customer.name}-${index}`}>
                                                 <td>{customer.name}</td>
                                                 <td>{customer.phone}</td>
                                                 <td>
@@ -641,7 +636,7 @@ const ActivityLogPage = () => {
                             <strong>수정된 필드:</strong>
                             <div className="mt-1">
                                 {details.updatedFields?.map((field, index) => (
-                                    <Badge key={index} bg="info" className="me-1">
+                                    <Badge key={`updated-field-${field}-${index}`} bg="info" className="me-1">
                                         {formatDetailKey(field)}
                                     </Badge>
                                 ))}
@@ -665,7 +660,7 @@ const ActivityLogPage = () => {
                                             <div className="bg-light p-2 rounded">
                                                 {Array.isArray(change.from) ? (
                                                     change.from.map((item, index) => (
-                                                        <Badge key={index} bg="secondary" className="me-1">
+                                                        <Badge key={`from-${item}-${index}`} bg="secondary" className="me-1">
                                                             {item}
                                                         </Badge>
                                                     ))
@@ -681,7 +676,7 @@ const ActivityLogPage = () => {
                                             <div className="bg-success bg-opacity-10 p-2 rounded">
                                                 {Array.isArray(change.to) ? (
                                                     change.to.map((item, index) => (
-                                                        <Badge key={index} bg="success" className="me-1">
+                                                        <Badge key={`to-${item}-${index}`} bg="success" className="me-1">
                                                             {item}
                                                         </Badge>
                                                     ))
@@ -713,7 +708,7 @@ const ActivityLogPage = () => {
                             {Array.isArray(value) ? (
                                 <div>
                                     {value.map((item, index) => (
-                                        <Badge key={index} bg="secondary" className="me-1">
+                                        <Badge key={`generic-item-${item}-${index}`} bg="secondary" className="me-1">
                                             {typeof item === 'object' ? JSON.stringify(item) : item}
                                         </Badge>
                                     ))}
@@ -998,7 +993,7 @@ const ActivityLogPage = () => {
                                 <div className="activity-timeline">
                                     {filteredActivities.map((activity, index) => (
                                         <div
-                                            key={activity.id}
+                                            key={activity.id || `activity-${index}`}
                                             className="activity-item"
                                             onClick={() => handleShowDetail(activity)}
                                             style={{ cursor: 'pointer' }}
@@ -1106,7 +1101,7 @@ const ActivityLogPage = () => {
                                             {/* 페이지 번호들 */}
                                             {getPageNumbers().map((pageNumber, index) => (
                                                 <li
-                                                    key={index}
+                                                    key={`page-${pageNumber}-${index}`}
                                                     className={`page-item ${pagination.current === pageNumber ? 'active' : ''} ${pageNumber === '...' ? 'disabled' : ''}`}
                                                 >
                                                     {pageNumber === '...' ? (
@@ -1296,7 +1291,7 @@ const ActivityLogPage = () => {
                 </Modal.Footer>
             </Modal>
 
-            <style jsx>{`
+            <style>{`
                 .activity-timeline {
                     /* max-height와 overflow-y 제거 */
                 }
