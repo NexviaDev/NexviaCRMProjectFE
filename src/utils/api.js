@@ -18,8 +18,12 @@ const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
   },
   timeout: 300000, // 5분 타임아웃 설정 (AI 브리핑 대응)
+  withCredentials: true, // CORS credentials 허용
 });
 
 api.interceptors.request.use(
@@ -79,6 +83,7 @@ export const apiWithUnlimitedTimeout = axios.create({
     "Expires": "0"
   },
   timeout: 300000, // 5분 타임아웃 (무제한 대신 충분히 긴 시간)
+  withCredentials: true, // CORS credentials 허용
 });
 
 // CSV 업로드용 긴 타임아웃 API 인스턴스
@@ -86,8 +91,12 @@ export const apiWithLongTimeout = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
   },
   timeout: 300000, // 5분 타임아웃 설정 (대량 CSV 업로드용)
+  withCredentials: true, // CORS credentials 허용
 });
 
 // 무제한 타임아웃 API에도 인터셉터 적용
