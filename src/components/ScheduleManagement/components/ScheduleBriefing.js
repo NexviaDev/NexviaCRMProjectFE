@@ -117,90 +117,6 @@ const ScheduleBriefing = ({ user }) => {
         }
     };
 
-    // 시간순 타임라인 렌더링 함수
-    const renderTimeline = () => {
-        if (!briefingData || !briefingData.data.schedules || briefingData.data.schedules.length === 0) {
-            return null;
-        }
-
-        // 시간순으로 정렬
-        const sortedSchedules = [...briefingData.data.schedules].sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            if (dateA.getTime() !== dateB.getTime()) {
-                return dateA.getTime() - dateB.getTime();
-            }
-            // 같은 날짜면 시간순으로 정렬
-            const timeA = a.time || '00:00';
-            const timeB = b.time || '00:00';
-            return timeA.localeCompare(timeB);
-        });
-
-        return (
-            <Card className="mt-3 border-primary">
-                <Card.Header className="bg-primary text-white">
-                    <h6 className="mb-0">
-                        <FaClock className="me-2" />
-                        ⏰ 시간순 타임라인 ({sortedSchedules.length}개 일정)
-                    </h6>
-                </Card.Header>
-                <Card.Body className="p-0">
-                    <div className="timeline-container">
-                        {sortedSchedules.map((schedule, index) => (
-                            <div key={schedule._id} className="timeline-item">
-                                <div className="timeline-marker">
-                                    <div className="timeline-dot"></div>
-                                    {index < sortedSchedules.length - 1 && <div className="timeline-line"></div>}
-                                </div>
-                                <div className="timeline-content">
-                                    <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 className="mb-1 text-primary">{schedule.title}</h6>
-                                        <Badge 
-                                            bg={schedule.priority === '높음' ? 'danger' : schedule.priority === '보통' ? 'warning' : 'secondary'}
-                                            className="ms-2"
-                                        >
-                                            {schedule.priority}
-                                        </Badge>
-                                    </div>
-                                    <div className="timeline-details">
-                                        <div className="timeline-detail-item">
-                                            <FaClock className="me-1 text-muted" />
-                                            <span className="text-muted">
-                                                {new Date(schedule.date).toLocaleDateString('ko-KR')} {schedule.time}
-                                            </span>
-                                        </div>
-                                        {schedule.location && (
-                                            <div className="timeline-detail-item">
-                                                <FaMapMarkerAlt className="me-1 text-muted" />
-                                                <span className="text-muted">{schedule.location}</span>
-                                            </div>
-                                        )}
-                                        {schedule.relatedCustomers && schedule.relatedCustomers.length > 0 && (
-                                            <div className="timeline-detail-item">
-                                                <FaUser className="me-1 text-muted" />
-                                                <span className="text-muted">
-                                                    {schedule.relatedCustomers.map(c => c.name).join(', ')}
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div className="timeline-detail-item">
-                                            <Badge bg="info" className="me-1">{schedule.type}</Badge>
-                                            <Badge bg="outline-secondary">{schedule.status}</Badge>
-                                        </div>
-                                    </div>
-                                    {schedule.description && (
-                                        <div className="timeline-description mt-2">
-                                            <small className="text-muted">{schedule.description}</small>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card.Body>
-            </Card>
-        );
-    };
 
     return (
         <Card className="shadow-sm">
@@ -335,8 +251,6 @@ const ScheduleBriefing = ({ user }) => {
                     </Card>
                 )}
 
-                {/* 시간순 타임라인 */}
-                {renderTimeline()}
 
                 {/* 일정 목록 (브리핑이 생성된 경우) */}
                 {briefingData && briefingData.data.schedules && briefingData.data.schedules.length > 0 && (
@@ -419,85 +333,6 @@ const ScheduleBriefing = ({ user }) => {
                 }
                 .briefing-content li {
                     margin-bottom: 0.5rem;
-                }
-                
-                /* 타임라인 스타일 */
-                .timeline-container {
-                    padding: 20px;
-                }
-                
-                .timeline-item {
-                    display: flex;
-                    margin-bottom: 20px;
-                    position: relative;
-                }
-                
-                .timeline-marker {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    margin-right: 15px;
-                    position: relative;
-                }
-                
-                .timeline-dot {
-                    width: 12px;
-                    height: 12px;
-                    background-color: #667eea;
-                    border-radius: 50%;
-                    border: 3px solid white;
-                    box-shadow: 0 0 0 2px #667eea;
-                    z-index: 2;
-                }
-                
-                .timeline-line {
-                    width: 2px;
-                    height: 40px;
-                    background-color: #e9ecef;
-                    margin-top: 5px;
-                }
-                
-                .timeline-content {
-                    flex: 1;
-                    background: white;
-                    border-radius: 8px;
-                    padding: 15px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    border-left: 3px solid #667eea;
-                }
-                
-                .timeline-details {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 5px;
-                }
-                
-                .timeline-detail-item {
-                    display: flex;
-                    align-items: center;
-                    font-size: 13px;
-                }
-                
-                .timeline-description {
-                    background: #f8f9fa;
-                    padding: 8px;
-                    border-radius: 4px;
-                    border-left: 3px solid #dee2e6;
-                }
-                
-                @media (max-width: 768px) {
-                    .timeline-item {
-                        flex-direction: column;
-                    }
-                    
-                    .timeline-marker {
-                        margin-right: 0;
-                        margin-bottom: 10px;
-                    }
-                    
-                    .timeline-line {
-                        display: none;
-                    }
                 }
             `}</style>
         </Card>

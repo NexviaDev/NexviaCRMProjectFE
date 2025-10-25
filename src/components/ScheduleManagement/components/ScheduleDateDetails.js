@@ -46,9 +46,9 @@ const ScheduleDateDetails = ({
                                     key={schedule._id} 
                                     onClick={() => onScheduleClick(schedule)}
                                     style={{ 
-                                        cursor: (user.level >= 5 && schedule.byCompanyNumber === user.businessNumber) ? 'pointer' : 'default'
+                                        cursor: (schedule.publisher && schedule.publisher._id === user._id) ? 'pointer' : 'default'
                                     }}
-                                    className={`mb-2 ${(user.level >= 11 || (schedule.publisher?.businessNumber === user.businessNumber && user.level >= 5) || schedule.publisher?._id === user._id) ? 'list-group-item-clickable' : ''}`}
+                                    className={`mb-2 ${(schedule.publisher && schedule.publisher._id === user._id) ? 'list-group-item-clickable' : ''}`}
                                 >
                                     <div className="d-flex justify-content-between align-items-start">
                                         <div className="flex-grow-1">

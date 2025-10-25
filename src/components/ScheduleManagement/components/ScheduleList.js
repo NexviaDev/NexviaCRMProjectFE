@@ -66,9 +66,9 @@ const ScheduleList = ({
                                 key={schedule._id}
                                 onClick={() => onScheduleClick(schedule)}
                                 style={{ 
-                                    cursor: (user.level >= 5 && schedule.byCompanyNumber === user.businessNumber) ? 'pointer' : 'default'
+                                    cursor: (schedule.publisher && schedule.publisher._id === user._id) ? 'pointer' : 'default'
                                 }}
-                                className={(user.level >= 11 || (schedule.publisher?.businessNumber === user.businessNumber && user.level >= 5) || schedule.publisher?._id === user._id) ? 'table-row-clickable' : ''}
+                                className={(schedule.publisher && schedule.publisher._id === user._id) ? 'table-row-clickable' : ''}
                             >
                                 <td>
                                     <div className="d-flex align-items-center">

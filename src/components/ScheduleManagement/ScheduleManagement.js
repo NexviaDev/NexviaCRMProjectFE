@@ -105,7 +105,8 @@ const ScheduleManagement = () => {
 
     // 행 클릭으로 편집 모달 열기
     const handleRowClick = (schedule) => {
-        if (user.level >= 5 && schedule.byCompanyNumber === user.businessNumber) {
+        // 모든 사용자는 자신이 등록한 일정만 편집 가능
+        if (schedule.publisher && schedule.publisher._id === user._id) {
             handleShowModal(schedule);
         }
     };

@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Container, Card, Alert, Spinner, Form, Button } from "react-bootstrap";
+import { Container, Card, Alert, Spinner, Button } from "react-bootstrap";
 import api from "../utils/api";
 import { UserContext } from "../components/UserContext";
 import { GoogleLogin } from '@react-oauth/google';
@@ -15,10 +15,6 @@ const LoginPage = () => {
   const location = useLocation();
   const { getUser } = useContext(UserContext);
 
-  // 탈퇴된 계정 복구 관련 상태
-  const [showRestoreModal, setShowRestoreModal] = useState(false);
-  const [deletedUser, setDeletedUser] = useState(null);
-  const [restoreLoading, setRestoreLoading] = useState(false);
 
   const { from } = location.state || { from: { pathname: "/" } };
 
@@ -364,34 +360,7 @@ const LoginPage = () => {
     }
   };
 
-  // 탈퇴된 계정 복구 모달 표시
-  const handleRestoreAccount = () => {
-    setShowRestoreModal(true);
-  };
 
-  // 탈퇴된 계정 복구 처리
-  const handleRestoreSubmit = async (event) => {
-    event.preventDefault();
-    if (!deletedUser) return;
-
-    try {
-      setRestoreLoading(true);
-      const response = await api.post('/user/restore-account', {
-        email: deletedUser.email,
-        businessNumber: deletedUser.businessNumber
-      });
-
-      if (response.status === 200) {
-        alert('계정이 성공적으로 복구되었습니다. 다시 로그인해주세요.');
-        setShowRestoreModal(false);
-        setDeletedUser(null);
-      }
-    } catch (error) {
-      setError(error.response?.data?.message || '계정 복구에 실패했습니다.');
-    } finally {
-      setRestoreLoading(false);
-    }
-  };
 
   return (
     <Container className="d-flex  justify-content-center" style={{ minHeight: '100vh' }}>
@@ -481,93 +450,13 @@ const LoginPage = () => {
               <p className="mb-2">
                 계정이 없으신가요?{' '}
                 <Link to="/register" className="text-decoration-none">
-                  회원가입
+                  회원 가입
                 </Link>
-              </p>
-              <p className="mb-0">
-                <button
-                  type="button"
-                  className="btn btn-link text-decoration-none p-0"
-                  onClick={handleRestoreAccount}
-                >
-                  탈퇴된 계정 복구하기
-                </button>
               </p>
             </div>
           </Card.Body>
         </Card>
 
-        {/* 탈퇴된 계정 복구 모달 */}
-        {showRestoreModal && (
-          <div className="modal-overlay" style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <Card style={{ maxWidth: '500px', width: '90%' }}>
-              <Card.Header>
-                <h5 className="mb-0">탈퇴된 계정 복구</h5>
-              </Card.Header>
-              <Card.Body>
-                <p className="text-muted mb-3">
-                  탈퇴된 계정을 복구하려면 이메일과 사업자등록번호를 입력해주세요.
-                </p>
-                <Form onSubmit={handleRestoreSubmit}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>이메일</Form.Label>
-                    <Form.Control
-                      type="email"
-                      placeholder="이메일을 입력하세요"
-                      value={deletedUser?.email || ''}
-                      onChange={(e) => setDeletedUser({ ...deletedUser, email: e.target.value })}
-                      required
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>사업자등록번호</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="사업자등록번호를 입력하세요"
-                      value={deletedUser?.businessNumber || ''}
-                      onChange={(e) => setDeletedUser({ ...deletedUser, businessNumber: e.target.value })}
-                      required
-                    />
-                  </Form.Group>
-                  <div className="d-flex gap-2 justify-content-end">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowRestoreModal(false)}
-                      disabled={restoreLoading}
-                    >
-                      취소
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={restoreLoading}
-                    >
-                      {restoreLoading ? (
-                        <>
-                          <Spinner animation="border" size="sm" className="me-2" />
-                          복구 중...
-                        </>
-                      ) : (
-                        '계정 복구'
-                      )}
-                    </Button>
-                  </div>
-                </Form>
-              </Card.Body>
-            </Card>
-          </div>
-        )}
       </div>
     </Container>
   );

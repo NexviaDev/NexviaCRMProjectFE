@@ -168,7 +168,7 @@ const NavSection = () => {
                                 letterSpacing: '-0.5px'
                             }}
                         >
-                            Nexvia
+                            Home
                         </span>
                     </Navbar.Brand>
                     <Navbar.Toggle aria-controls="offcanvasNavbar" />
@@ -299,7 +299,7 @@ const NavSection = () => {
                                 letterSpacing: '-0.5px'
                             }}
                         >
-                            Nexvia
+                           Home
                         </span>
                     </Navbar.Brand>
                     <Navbar.Toggle aria-controls="offcanvasNavbar" />

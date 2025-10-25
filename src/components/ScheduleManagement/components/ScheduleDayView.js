@@ -37,7 +37,7 @@ const ScheduleDayView = ({ selectedDate, allSchedules, onScheduleClick, user }) 
                             className="d-flex justify-content-between align-items-start schedule-item-clickable"
                             onClick={() => onScheduleClick(schedule)}
                             style={{ 
-                                cursor: (user.level >= 5 && schedule.byCompanyNumber === user.businessNumber) ? 'pointer' : 'default'
+                                cursor: (schedule.publisher && schedule.publisher._id === user._id) ? 'pointer' : 'default'
                             }}
                         >
                             <div className="ms-2 me-auto">
