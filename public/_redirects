@@ -1,1 +1,5 @@
-/*    /index.html   200!
+# Force no redirect for static files
+/static/* /static/* 200
+
+# Fallback to index.html for everything else
+/*    /index.html   200

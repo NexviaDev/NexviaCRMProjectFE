@@ -6,8 +6,3 @@
   REACT_APP_BACKEND_URL = "https://nexviacrmproject-backend-f8b1e684656c.herokuapp.com"
   NODE_VERSION = "18"
   CI = "false"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
