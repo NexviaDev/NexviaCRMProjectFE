@@ -22,7 +22,16 @@ const LoginPage = () => {
   useEffect(() => {
     const handleMessage = async (event) => {
       // 보안: 같은 origin에서 온 메시지만 처리
-      if (event.origin !== window.location.origin) return;
+      // localhost와 실제 도메인 모두 처리하기 위해 origin 검증 완화
+      const allowedOrigins = [
+        window.location.origin,
+        'http://localhost:3000',
+        'https://' + window.location.host
+      ];
+      
+      if (!allowedOrigins.some(origin => event.origin.startsWith(origin))) {
+        return;
+      }
 
       if (event.data.type === 'NAVER_LOGIN_SUCCESS') {
         try {
@@ -82,6 +91,11 @@ const LoginPage = () => {
         } finally {
           setNaverLoading(false);
         }
+      } else if (event.data.type === 'NAVER_LOGIN_ERROR') {
+        // 네이버 로그인 에러 처리
+        console.error('Naver login error:', event.data.error);
+        setError(event.data.error || "네이버 로그인 중 문제가 발생했습니다.");
+        setNaverLoading(false);
       }
     };
 
@@ -103,13 +117,26 @@ const LoginPage = () => {
         return;
       }
 
-      // 팝업이 닫힐 때까지 대기
+      // 팝업이 닫힐 때까지 대기 (최대 10분)
+      let timeoutCounter = 0;
+      const maxTime = 600000; // 10분
+      const checkInterval = 1000; // 1초마다 체크
+
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
+          // 팝업이 닫혔는데도 로딩이 계속된다면 강제로 종료
+          setTimeout(() => {
+            setNaverLoading(false);
+          }, 5000); // 5초 후 강제 종료
+        }
+        timeoutCounter += checkInterval;
+        if (timeoutCounter >= maxTime) {
+          clearInterval(checkClosed);
+          setError('로그인 시간이 초과되었습니다. 다시 시도해주세요.');
           setNaverLoading(false);
         }
-      }, 1000);
+      }, checkInterval);
 
     } catch (error) {
       console.error('Naver login error:', error);

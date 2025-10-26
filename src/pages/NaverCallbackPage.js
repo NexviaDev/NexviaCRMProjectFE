@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Container, Spinner, Alert } from 'react-bootstrap';
-import { handleNaverCallback } from '../utils/naverAuth';
+import { Container, Spinner } from 'react-bootstrap';
 
 const NaverCallbackPage = () => {
   const [searchParams] = useSearchParams();
@@ -18,45 +17,65 @@ const NaverCallbackPage = () => {
         // 에러 체크
         if (error) {
           const errorMessage = `네이버 로그인 실패: ${errorDescription || error}`;
-          window.opener?.postMessage({
-            type: 'NAVER_LOGIN_ERROR',
-            error: errorMessage
-          }, window.location.origin);
-          window.close();
+          console.error('Naver callback error:', errorMessage);
+          
+          // 부모 창이 존재하는 경우에만 메시지 전송
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'NAVER_LOGIN_ERROR',
+              error: errorMessage
+            }, window.location.origin);
+          }
+          
+          // 팝업 창 닫기 (약간의 지연 후)
+          setTimeout(() => window.close(), 100);
           return;
         }
 
         // 필수 파라미터 체크
         if (!code || !state) {
           const errorMessage = '필수 인증 정보가 누락되었습니다.';
-          window.opener?.postMessage({
-            type: 'NAVER_LOGIN_ERROR',
-            error: errorMessage
-          }, window.location.origin);
-          window.close();
+          console.error('Missing parameters in Naver callback');
+          
+          // 부모 창이 존재하는 경우에만 메시지 전송
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'NAVER_LOGIN_ERROR',
+              error: errorMessage
+            }, window.location.origin);
+          }
+          
+          // 팝업 창 닫기 (약간의 지연 후)
+          setTimeout(() => window.close(), 100);
           return;
         }
 
         // 성공 메시지를 부모 창으로 전송
-        window.opener?.postMessage({
-          type: 'NAVER_LOGIN_SUCCESS',
-          code,
-          state
-        }, window.location.origin);
+        console.log('Sending Naver login success message');
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'NAVER_LOGIN_SUCCESS',
+            code,
+            state
+          }, window.location.origin);
+        }
 
-        // 팝업 창 닫기
-        window.close();
+        // 팝업 창 닫기 (약간의 지연 후)
+        setTimeout(() => window.close(), 500);
 
       } catch (error) {
         console.error('Naver callback processing error:', error);
         
         // 에러 메시지를 부모 창으로 전송
-        window.opener?.postMessage({
-          type: 'NAVER_LOGIN_ERROR',
-          error: error.message
-        }, window.location.origin);
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'NAVER_LOGIN_ERROR',
+            error: error.message
+          }, window.location.origin);
+        }
         
-        window.close();
+        // 팝업 창 닫기 (약간의 지연 후)
+        setTimeout(() => window.close(), 100);
       }
     };
 
