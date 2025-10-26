@@ -1,11 +1,10 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Container, Card, Alert, Spinner, Button } from "react-bootstrap";
 import api from "../utils/api";
 import { UserContext } from "../components/UserContext";
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
-import { openNaverLoginPopup } from "../utils/naverAuth";
 
 const LoginPage = () => {
   const [error, setError] = useState('');
@@ -15,79 +14,7 @@ const LoginPage = () => {
   const location = useLocation();
   const { getUser } = useContext(UserContext);
 
-
   const { from } = location.state || { from: { pathname: "/" } };
-
-  // 네이버 로그인 팝업 메시지 리스너
-  useEffect(() => {
-    const handleMessage = async (event) => {
-      // 보안: 같은 origin에서 온 메시지만 처리
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'NAVER_LOGIN_SUCCESS') {
-        try {
-          setNaverLoading(true);
-          setError('');
-
-          const { code, state } = event.data;
-
-          // 네이버 로그인 API 호출
-          const response = await api.post('/user/naver-login', { code, state });
-
-          if (response.status === 200) {
-            const token = response.data.token;
-            const sessionId = response.data.sessionId;
-            const userId = response.data.user._id;
-            const user = response.data.user;
-
-            sessionStorage.setItem("token", token);
-            sessionStorage.setItem("sessionId", sessionId);
-            api.defaults.headers["Authorization"] = "Bearer " + token;
-
-            // 필수 정보 확인 (네이버 로그인의 경우 더 엄격하게 체크)
-            const hasRequiredInfo = user.companyName &&
-              user.businessNumber &&
-              user.businessAddress &&
-              user.contactNumber &&
-              user.gender;
-            // birthDate, detailedAddress, position은 선택적 필드이므로 제외
-
-            // 필수 정보가 없으면 RegisterPage로 이동
-            if (!hasRequiredInfo) {
-              navigate('/register', {
-                state: {
-                  from: from,
-                  needsAdditionalInfo: true,
-                  user: user,
-                  isOAuthUser: true,
-                  socialProvider: 'naver'
-                }
-              });
-              return;
-            }
-
-            // 사용자 정보 업데이트
-            if (getUser) {
-              await getUser();
-            }
-
-            // 로그인 히스토리 기록
-            await logLoginHistory(userId, 'Naver OAuth Login');
-
-            navigate(from);
-          }
-        } catch (error) {
-          console.error('Naver OAuth Login Error:', error);
-          setError(error.response?.data?.message || "네이버 로그인 중 문제가 발생했습니다. 다시 시도해주세요.");
-        } finally {
-          setNaverLoading(false);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [navigate, from, getUser]);
 
   // 네이버 로그인 시작
   const handleNaverLogin = () => {
@@ -95,21 +22,21 @@ const LoginPage = () => {
       setNaverLoading(true);
       setError('');
 
-      const popup = openNaverLoginPopup();
-
-      if (!popup) {
-        setError('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
-        setNaverLoading(false);
-        return;
-      }
-
-      // 팝업이 닫힐 때까지 대기
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          setNaverLoading(false);
-        }
-      }, 1000);
+      // 클라이언트 ID와 콜백 URL 설정
+      const clientId = 'xgrVE4stsM0zDg17E7eU';
+      const redirectURI = encodeURIComponent('http://localhost:3000/auth/naver/callback');
+      
+      // 랜덤 state 생성 (CSRF 방지)
+      const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // state를 sessionStorage에 저장
+      sessionStorage.setItem('naver_oauth_state', state);
+      
+      // 네이버 인증 URL 생성
+      const naverAuthURL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectURI}&state=${state}`;
+      
+      // 네이버 로그인 페이지로 리다이렉트
+      window.location.href = naverAuthURL;
 
     } catch (error) {
       console.error('Naver login error:', error);
@@ -129,14 +56,67 @@ const LoginPage = () => {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
 
+            // 지역명 변환 요청
+            let locationName = `위도 ${latitude}, 경도 ${longitude}`;
+            let fullAddress = '';
+            
+            try {
+              const locationResponse = await api.post('/utils/convert-location', {
+                latitude: latitude,
+                longitude: longitude
+              });
+
+              if (locationResponse.data.success && locationResponse.data.data.locationName) {
+                locationName = locationResponse.data.data.locationName;
+                fullAddress = locationResponse.data.data.fullAddress || '';
+              }
+            } catch (locationError) {
+              console.error('지역명 변환 실패:', locationError);
+            }
+
+            // History 기록
+            await api.post('/history', {
+              author: userId,
+              category: 'Login',
+              content: `${content} - 위치: ${locationName}`,
+              relatedUsers: [userId],
+            });
+
+            // ActivityLog 기록
+            await api.post('/activity-logs', {
+              type: 'system',
+              action: '로그인',
+              description: `${content} - 위치: ${locationName}`,
+              priority: 2,
+              status: 'success',
+              details: {
+                loginMethod: content,
+                latitude: latitude,
+                longitude: longitude,
+                locationName: locationName,
+                locationSource: 'geolocation',
+                fullAddress: fullAddress
+              }
+            });
+
+            geolocationLogged = true;
+          },
+          async (error) => {
+            console.error("Geolocation error:", error.message);
+
+            if (!geolocationLogged) {
+              try {
+                const ipResponse = await fetch('https://ipapi.co/json/');
+                const ipData = await ipResponse.json();
+
                 // 지역명 변환 요청
-                let locationName = `위도 ${latitude}, 경도 ${longitude}`;
+                let locationName = `위도 ${ipData.latitude}, 경도 ${ipData.longitude}`;
                 let fullAddress = '';
                 
                 try {
                   const locationResponse = await api.post('/utils/convert-location', {
-                    latitude: latitude,
-                    longitude: longitude
+                    latitude: ipData.latitude,
+                    longitude: ipData.longitude
                   });
 
                   if (locationResponse.data.success && locationResponse.data.data.locationName) {
@@ -145,14 +125,13 @@ const LoginPage = () => {
                   }
                 } catch (locationError) {
                   console.error('지역명 변환 실패:', locationError);
-                  // 변환 실패 시 원본 좌표 사용
                 }
 
                 // History 기록
                 await api.post('/history', {
                   author: userId,
                   category: 'Login',
-                  content: `${content} - 위치: ${locationName}`,
+                  content: `${content} - 위치: ${locationName} (IP 기반)`,
                   relatedUsers: [userId],
                 });
 
@@ -160,73 +139,19 @@ const LoginPage = () => {
                 await api.post('/activity-logs', {
                   type: 'system',
                   action: '로그인',
-                  description: `${content} - 위치: ${locationName}`,
+                  description: `${content} - 위치: ${locationName} (IP 기반)`,
                   priority: 2,
                   status: 'success',
                   details: {
                     loginMethod: content,
-                    latitude: latitude,
-                    longitude: longitude,
+                    latitude: ipData.latitude,
+                    longitude: ipData.longitude,
                     locationName: locationName,
-                    locationSource: 'geolocation',
+                    locationSource: 'ip_geolocation',
+                    ipAddress: ipData.ip,
                     fullAddress: fullAddress
                   }
                 });
-
-            geolocationLogged = true;
-          },
-          async (error) => {
-            console.error("Geolocation error:", error.message);
-
-            if (!geolocationLogged) {
-                  try {
-                    const ipResponse = await fetch('https://ipapi.co/json/');
-                    const ipData = await ipResponse.json();
-
-                    // 지역명 변환 요청
-                    let locationName = `위도 ${ipData.latitude}, 경도 ${ipData.longitude}`;
-                    let fullAddress = '';
-                    
-                    try {
-                      const locationResponse = await api.post('/utils/convert-location', {
-                        latitude: ipData.latitude,
-                        longitude: ipData.longitude
-                      });
-
-                      if (locationResponse.data.success && locationResponse.data.data.locationName) {
-                        locationName = locationResponse.data.data.locationName;
-                        fullAddress = locationResponse.data.data.fullAddress || '';
-                      }
-                    } catch (locationError) {
-                      console.error('지역명 변환 실패:', locationError);
-                      // 변환 실패 시 원본 좌표 사용
-                    }
-
-                    // History 기록
-                    await api.post('/history', {
-                      author: userId,
-                      category: 'Login',
-                      content: `${content} - 위치: ${locationName} (IP 기반)`,
-                      relatedUsers: [userId],
-                    });
-
-                    // ActivityLog 기록
-                    await api.post('/activity-logs', {
-                      type: 'system',
-                      action: '로그인',
-                      description: `${content} - 위치: ${locationName} (IP 기반)`,
-                      priority: 2,
-                      status: 'success',
-                      details: {
-                        loginMethod: content,
-                        latitude: ipData.latitude,
-                        longitude: ipData.longitude,
-                        locationName: locationName,
-                        locationSource: 'ip_geolocation',
-                        ipAddress: ipData.ip,
-                        fullAddress: fullAddress
-                      }
-                    });
               } catch (ipError) {
                 console.error("IP location fetch failed:", ipError);
                 
@@ -312,7 +237,6 @@ const LoginPage = () => {
           user.businessAddress &&
           user.contactNumber &&
           user.gender;
-        // birthDate, detailedAddress, position은 선택적 필드이므로 제외
 
         // 필수 정보가 없으면 RegisterPage로 이동
         if (!hasRequiredInfo) {
@@ -328,7 +252,7 @@ const LoginPage = () => {
           return;
         }
 
-        // 사용자 정보 업데이트 - UserContext의 getUser 호출
+        // 사용자 정보 업데이트
         if (getUser) {
           await getUser();
         }
@@ -360,10 +284,8 @@ const LoginPage = () => {
     }
   };
 
-
-
   return (
-    <Container className="d-flex  justify-content-center" style={{ minHeight: '100vh' }}>
+    <Container className="d-flex justify-content-center" style={{ minHeight: '100vh' }}>
       <div style={{ maxWidth: '400px', width: '100%' }}>
         <Card className="shadow">
           <Card.Body className="p-4">
@@ -381,8 +303,6 @@ const LoginPage = () => {
             <div className="d-flex flex-column align-items-center gap-3">
               {/* Google 로그인 */}
               <div style={{ width: '100%', maxWidth: '300px' }}>
-
-
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
@@ -456,7 +376,6 @@ const LoginPage = () => {
             </div>
           </Card.Body>
         </Card>
-
       </div>
     </Container>
   );
