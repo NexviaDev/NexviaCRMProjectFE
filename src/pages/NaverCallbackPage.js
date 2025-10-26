@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Container, Spinner } from 'react-bootstrap';
 
 const NaverCallbackPage = () => {
   const [searchParams] = useSearchParams();
@@ -63,13 +62,18 @@ const NaverCallbackPage = () => {
   }, [searchParams]);
 
   return (
-    <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-      <div className="text-center">
-        <Spinner animation="border" variant="success" size="lg" className="mb-3" />
-        <h5>네이버 로그인 처리 중...</h5>
-        <p className="text-muted">잠시만 기다려주세요.</p>
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <h2>네이버 로그인 처리 중...</h2>
+        <p>잠시만 기다려주세요.</p>
       </div>
-    </Container>
+    </div>
   );
 };
 
