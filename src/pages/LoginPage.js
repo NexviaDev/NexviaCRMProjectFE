@@ -33,7 +33,9 @@ const LoginPage = () => {
 
       // 클라이언트 ID와 콜백 URL 설정
       const clientId = 'xgrVE4stsM0zDg17E7eU';
-      const redirectURI = encodeURIComponent('http://localhost:3000/auth/naver/callback');
+      // 현재 도메인에 따라 콜백 URL 동적 설정
+      const currentOrigin = window.location.origin;
+      const redirectURI = encodeURIComponent(`${currentOrigin}/auth/naver/callback`);
       
       // 랜덤 state 생성 (CSRF 방지)
       const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
