@@ -191,8 +191,8 @@ const CSVBulkUploadModal = ({ showModal, onHide, onSuccess, customerType = '일�
             setUploadResults(results);
             setUploadProgress(100);
             
-            // 성공적으로 업로드된 경우에만 목록 새로고침
-            if (results.success.length > 0) {
+            // 업로드가 완료되었으면 목록 새로고침 (성공/실패 여부와 관계없이)
+            if (onSuccess) {
                 onSuccess(); // 고객 목록 새로고침
             }
 

@@ -832,8 +832,8 @@ const CustomerManagement = () => {
         );
     }
 
-    // level 2 이하인 경우 접근 제한
-    if (user.level <= 2) {
+    // level 1 이하인 경우 접근 제한 (레벨 2부터 허용)
+    if (user.level <= 1) {
         return (
             <Container className="mt-4" style={{ paddingBottom: '80px' }}>
                 <Card className="shadow-sm">
@@ -1618,9 +1618,15 @@ const CustomerManagement = () => {
             {/* CSV 일괄 등록 모달 */}
             <CSVBulkUploadModal
                 showModal={showCSVModal}
-                onHide={() => setShowCSVModal(false)}
+                onHide={() => {
+                    setShowCSVModal(false);
+                }}
                 user={user}
-                onSuccess={fetchCustomers}
+                onSuccess={() => {
+                    setShowCSVModal(false);
+                    // 페이지 새로고침
+                    window.location.reload();
+                }}
                 customerType={activeTab === 'buyers' ? '매수자' : activeTab === 'sellers' ? '매도자' : '일반'}
             />
 
@@ -1687,8 +1693,9 @@ const CustomerManagement = () => {
                     setShowTemplateUploadModal(false);
                 }}
                 onSuccess={() => {
-                    fetchCustomers();
                     setShowTemplateUploadModal(false);
+                    // 페이지 새로고침
+                    window.location.reload();
                 }}
             />
 

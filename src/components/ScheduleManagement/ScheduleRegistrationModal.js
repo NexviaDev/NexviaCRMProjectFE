@@ -5,7 +5,7 @@ import { UserContext } from '../UserContext';
 import api from '../../utils/api';
 import Select from 'react-select';
 
-const ScheduleRegistrationModal = ({ showModal, onHide, editingSchedule, onSuccess, user, preSelectedCustomers = [] }) => {
+const ScheduleRegistrationModal = ({ showModal, onHide, editingSchedule, onSuccess, user, preSelectedCustomers = [], selectedDate }) => {
     const [formData, setFormData] = useState({
         title: '',
         type: '시세조사',
@@ -61,11 +61,14 @@ const ScheduleRegistrationModal = ({ showModal, onHide, editingSchedule, onSucce
                 }
             }
         } else {
-            const today = new Date().toISOString().split('T')[0];
+            // selectedDate가 있으면 사용, 없으면 오늘 날짜 사용
+            const defaultDate = selectedDate 
+                ? selectedDate.toISOString().split('T')[0] 
+                : new Date().toISOString().split('T')[0];
             setFormData({
                 title: '',
                 type: '시세조사',
-                date: today,
+                date: defaultDate,
                 time: '09:00',
                 location: '',
                 description: '',
@@ -77,7 +80,7 @@ const ScheduleRegistrationModal = ({ showModal, onHide, editingSchedule, onSucce
             });
             setCustomerSearchTerm('');
         }
-    }, [editingSchedule, customers]);
+    }, [editingSchedule, customers, selectedDate]);
 
     // 고객 목록과 매물 목록 가져오기
     useEffect(() => {

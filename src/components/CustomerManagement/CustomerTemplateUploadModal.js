@@ -156,9 +156,12 @@ const CustomerTemplateUploadModal = ({ show, onHide, onSuccess }) => {
                 customers: parsedData
             });
 
+            console.log('📤 업로드 응답:', response.data);
+
             if (response.data.success) {
                 setUploadResults(response.data);
                 setUploadProgress(100);
+                // 성공 콜백 호출
                 if (onSuccess) {
                     onSuccess();
                 }
@@ -166,8 +169,16 @@ const CustomerTemplateUploadModal = ({ show, onHide, onSuccess }) => {
                 setError(response.data.message || '업로드 중 오류가 발생했습니다.');
             }
         } catch (error) {
-            console.error('업로드 오류:', error);
-            setError('업로드 중 오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+            console.error('❌ 업로드 오류:', error);
+            // 서버에서 실제로 성공했지만 클라이언트 에러가 발생한 경우
+            if (error.response?.data?.success) {
+                console.log('✅ 서버에서는 성공했지만 클라이언트 에러 발생');
+                if (onSuccess) {
+                    onSuccess();
+                }
+            } else {
+                setError('업로드 중 오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+            }
         } finally {
             setUploading(false);
         }

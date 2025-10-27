@@ -126,7 +126,7 @@ const Home = () => {
         return items;
     };
 
-    // 통계 데이터 가져오기
+    // 통계 데이터 가져오기 (최적화된 버전)
     const fetchStats = async () => {
         try {
             // 모든 통계 로딩 상태를 true로 설정
@@ -139,84 +139,34 @@ const Home = () => {
                 upcomingAppointments: true
             });
             
-            // 1. 총 매물 수 가져오기
-            const propertiesResponse = await api.get('/properties?limit=1000');
-            const totalProperties = propertiesResponse.data.success ? propertiesResponse.data.data.length : 0;
-            setStats(prev => ({ ...prev, totalProperties }));
-            setStatsLoading(prev => ({ ...prev, totalProperties: false }));
-
-            // 2. 활성 고객 수 가져오기 (매수자 + 매도자)
-            const buyersResponse = await api.get('/customers?type=매수자&status=활성&limit=1000');
-            const sellersResponse = await api.get('/customers?type=매도자&status=활성&limit=1000');
-            const activeCustomers = (buyersResponse.data.success ? buyersResponse.data.data.length : 0) + 
-                                  (sellersResponse.data.success ? sellersResponse.data.data.length : 0);
-            setStats(prev => ({ ...prev, activeCustomers }));
-            setStatsLoading(prev => ({ ...prev, activeCustomers: false }));
-
-            // 3. 진행 중인 계약 수 가져오기
-            const contractsResponse = await api.get('/contracts?status=진행중&limit=1000');
-            const pendingContracts = contractsResponse.data.success ? contractsResponse.data.data.length : 0;
-            setStats(prev => ({ ...prev, pendingContracts }));
-            setStatsLoading(prev => ({ ...prev, pendingContracts: false }));
-
-            // 4. 완료된 거래 수 가져오기
-            const completedContractsResponse = await api.get('/contracts?status=완료&limit=1000');
-            const completedDeals = completedContractsResponse.data.success ? completedContractsResponse.data.data.length : 0;
-            setStats(prev => ({ ...prev, completedDeals }));
-            setStatsLoading(prev => ({ ...prev, completedDeals: false }));
-
-            // 5. 월 매출 계산 (이번 달 완료된 계약들의 수수료 합계)
-            // SalesManagement.js와 동일한 방식으로 모든 계약을 가져온 후 필터링
-            const allContractsResponse = await api.get('/contracts?limit=1000');
-            const currentMonth = new Date().getMonth() + 1;
-            const currentYear = new Date().getFullYear();
+            // 최적화된 통계 API 호출 (백엔드에서 한번에 처리)
+            const statsResponse = await api.get('/utils/dashboard/stats');
             
-            let monthlyRevenue = 0;
-            if (allContractsResponse.data.success && allContractsResponse.data.data.length > 0) {
-                // 이번 달에 체결된 완료된 계약들만 필터링
-                const thisMonthCompletedContracts = allContractsResponse.data.data.filter(contract => {
-                    // 완료된 계약만
-                    if (contract.status !== '완료') {
-                        return false;
-                    }
-                    
-                    // 계약 날짜가 있는지 확인
-                    if (!contract.contractDate) {
-                        return false;
-                    }
-                    
-                    try {
-                        const contractDate = new Date(contract.contractDate);
-                        const contractMonth = contractDate.getMonth() + 1;
-                        const contractYear = contractDate.getFullYear();
-                        
-                        return contractMonth === currentMonth && contractYear === currentYear;
-                    } catch (error) {
-                        return false;
-                    }
+            if (statsResponse.data.success) {
+                const statsData = statsResponse.data.data;
+                setStats({
+                    totalProperties: statsData.totalProperties || 0,
+                    activeCustomers: statsData.activeCustomers || 0,
+                    pendingContracts: statsData.pendingContracts || 0,
+                    completedDeals: statsData.completedDeals || 0,
+                    monthlyRevenue: statsData.monthlyRevenue || '0원',
+                    upcomingAppointments: statsData.upcomingAppointments || 0
                 });
-                
-                monthlyRevenue = thisMonthCompletedContracts.reduce((sum, contract) => {
-                    return sum + (contract.commission || 0);
-                }, 0);
             }
-            
-            setStats(prev => ({ 
-                ...prev, 
-                monthlyRevenue: monthlyRevenue > 0 ? `${monthlyRevenue.toLocaleString()}원` : '0원' 
-            }));
-            setStatsLoading(prev => ({ ...prev, monthlyRevenue: false }));
-
-            // 6. 예정 일정 수 가져오기 (오늘 이후)
-            const today = new Date().toISOString().split('T')[0];
-            const upcomingSchedulesResponse = await api.get(`/schedules?startDate=${today}&status=예정&limit=1000`);
-            const upcomingAppointments = upcomingSchedulesResponse.data.success ? upcomingSchedulesResponse.data.data.length : 0;
-            setStats(prev => ({ ...prev, upcomingAppointments }));
-            setStatsLoading(prev => ({ ...prev, upcomingAppointments: false }));
 
         } catch (error) {
             console.error('통계 데이터 조회 오류:', error);
             // 오류 발생 시 모든 로딩 상태를 false로 설정
+            setStatsLoading({
+                totalProperties: false,
+                activeCustomers: false,
+                pendingContracts: false,
+                monthlyRevenue: false,
+                completedDeals: false,
+                upcomingAppointments: false
+            });
+        } finally {
+            // 모든 통계가 로드되었으므로 로딩 상태를 false로 설정
             setStatsLoading({
                 totalProperties: false,
                 activeCustomers: false,
@@ -231,55 +181,48 @@ const Home = () => {
     // 오늘의 스케줄 가져오기 (본인 일정만)
     const fetchTodaySchedules = async () => {
         try {
-            setLoading(true);
             const today = new Date().toISOString().split('T')[0];
 
-            // 본인 일정만 조회하기 위해 publisher 파라미터 추가
-            const response = await api.get(`/schedules?startDate=${today}&endDate=${today}&limit=10&publisher=${user._id}`);
+            // 본인 일정만 조회하기 위해 publisher 파라미터 추가 (limit을 5로 줄임)
+            const response = await api.get(`/schedules?startDate=${today}&endDate=${today}&limit=5&publisher=${user._id}`);
 
             if (response.data.success) {
                 setTodaySchedules(response.data.data);
             }
         } catch (error) {
             console.error('오늘의 스케줄 조회 오류:', error);
-        } finally {
-            setLoading(false);
         }
     };
 
-    // 최근 활동 가져오기 (모든 사용자)
+    // 최근 활동 가져오기 (최적화: 필요한 데이터만 조회)
     const fetchRecentActivities = async () => {
         try {
-            setLoading(true);
-            const today = new Date().toISOString().split('T')[0];
+            // 최근 7일만 조회 (30일에서 단축)
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const startDate = sevenDaysAgo.toISOString().split('T')[0];
 
-            // 현재 날짜부터 이전 날짜로 조회 (최근 30일)
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-
-            // 진행중과 완료 상태만 조회 (최대 3개) - 오늘 제외하고 전날부터
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-            const response = await api.get(`/schedules?startDate=${startDate}&endDate=${yesterdayStr}&status=진행중&status=완료&limit=3`);
+            // limit 3개만 조회
+            const response = await api.get(`/schedules?startDate=${startDate}&endDate=${yesterdayStr}&status=진행중&limit=3`);
 
             if (response.data.success) {
                 setRecentActivities(response.data.data);
             }
         } catch (error) {
             console.error('최근 활동 조회 오류:', error);
-        } finally {
-            setLoading(false);
         }
     };
 
-    // 최신 뉴스 가져오기
+    // 최신 뉴스 가져오기 (최적화: 필요한 데이터만 조회)
     const fetchLatestNews = async () => {
         try {
             setNewsLoading(true);
-            const response = await api.get('/news?limit=15&sortBy=registrationDate&sortOrder=desc');
+            // 최신 6개만 조회 (15개에서 줄임)
+            const response = await api.get('/news?limit=6&sortBy=registrationDate&sortOrder=desc');
             
             if (response.data.success) {
                 setLatestNews(response.data.data);
@@ -299,12 +242,17 @@ const Home = () => {
         handleResize();
         window.addEventListener('resize', handleResize);
 
-        // 통계 데이터, 오늘의 스케줄과 최근 활동 가져오기
+        // 통계 데이터, 오늘의 스케줄과 최근 활동 가져오기 (병렬 처리로 최적화)
         if (user && user._id) {
-            fetchStats();
-            fetchTodaySchedules();
-            fetchRecentActivities();
-            fetchLatestNews();
+            // 모든 API 호출을 병렬로 실행
+            Promise.all([
+                fetchStats(),
+                fetchTodaySchedules(),
+                fetchRecentActivities(),
+                fetchLatestNews()
+            ]).catch(error => {
+                console.error('데이터 로딩 중 오류 발생:', error);
+            });
         }
 
         return () => window.removeEventListener('resize', handleResize);
@@ -824,7 +772,7 @@ const Home = () => {
                                 </div>
                             ) : latestNews.length > 0 ? (
                                 <div className="row">
-                                    {latestNews.slice(0, 15).map((news, index) => (
+                                    {latestNews.map((news, index) => (
                                         <div key={news._id} className="col-md-4 col-sm-6 mb-3">
                                             <Card 
                                                 className="h-100 border-0 shadow-sm transition-all"

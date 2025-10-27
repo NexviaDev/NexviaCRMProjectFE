@@ -1,21 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useContext, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { UserContext } from '../components/UserContext';
 
 const NaverCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { getUser } = useContext(UserContext);
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
-    const processNaverCallback = async () => {
-      try {
-        // URL 파라미터에서 code와 state 추출
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
-        const error = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
+    // code가 없으면 처리하지 않음
+    const code = searchParams.get('code');
+    if (!code) {
+      console.log('⚠️ code 파라미터 없음, 처리 생략');
+      return;
+    }
 
+    // localStorage로 중복 실행 방지 (StrictMode 대응)
+    const processedCode = sessionStorage.getItem(`naver_processed_${code}`);
+    if (processedCode) {
+      console.log('⚠️ 이미 처리된 code입니다, 중복 실행 방지');
+      return;
+    }
+
+    // 처리 시작 표시 (ref와 storage 둘 다 설정)
+    hasProcessed.current = true;
+    sessionStorage.setItem(`naver_processed_${code}`, 'true');
+
+    const processCallback = async () => {
+
+      const state = searchParams.get('state');
+      const error = searchParams.get('error');
+      const errorDescription = searchParams.get('error_description');
+
+      console.log('🔍 Naver Callback 처리 시작:', { code: code?.substring(0, 10), state, error });
+
+      try {
         // 에러 체크
         if (error) {
           console.error('Naver OAuth error:', errorDescription || error);
@@ -38,32 +59,17 @@ const NaverCallbackPage = () => {
           return;
         }
 
-        // state 검증 (CSRF 방지)
-        const savedState = sessionStorage.getItem('naver_oauth_state');
-        if (state !== savedState) {
-          sessionStorage.removeItem('naver_oauth_state');
-          console.error('State mismatch');
-          navigate('/login', { 
-            state: { 
-              error: '보안 토큰이 일치하지 않습니다.' 
-            } 
-          });
-          return;
-        }
-
-        // 사용된 state 제거
-        sessionStorage.removeItem('naver_oauth_state');
-
         // 백엔드에 네이버 로그인 요청
         const response = await api.post('/user/naver-login', {
           code,
           state
         });
 
+        console.log('✅ Naver 로그인 응답:', response.data);
+
         if (response.status === 200 && response.data.status === 'success') {
           const token = response.data.token;
           const sessionId = response.data.sessionId;
-          const userId = response.data.user._id;
           const user = response.data.user;
 
           // 토큰 저장
@@ -91,101 +97,9 @@ const NaverCallbackPage = () => {
             return;
           }
 
-          // 로그인 히스토리 기록
-          try {
-            let geolocationLogged = false;
-
-            if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                  const latitude = position.coords.latitude;
-                  const longitude = position.coords.longitude;
-
-                  let locationName = `위도 ${latitude}, 경도 ${longitude}`;
-                  
-                  try {
-                    const locationResponse = await api.post('/utils/convert-location', {
-                      latitude: latitude,
-                      longitude: longitude
-                    });
-
-                    if (locationResponse.data.success && locationResponse.data.data.locationName) {
-                      locationName = locationResponse.data.data.locationName;
-                    }
-                  } catch (locationError) {
-                    console.error('지역명 변환 실패:', locationError);
-                  }
-
-                  await api.post('/history', {
-                    author: userId,
-                    category: 'Login',
-                    content: `Naver OAuth Login - 위치: ${locationName}`,
-                    relatedUsers: [userId],
-                  });
-
-                  await api.post('/activity-logs', {
-                    type: 'system',
-                    action: '로그인',
-                    description: `Naver OAuth Login - 위치: ${locationName}`,
-                    priority: 2,
-                    status: 'success',
-                    details: {
-                      loginMethod: 'Naver OAuth',
-                      latitude: latitude,
-                      longitude: longitude,
-                      locationName: locationName,
-                      locationSource: 'geolocation'
-                    }
-                  });
-
-                  geolocationLogged = true;
-                },
-                async (error) => {
-                  console.error("Geolocation error:", error.message);
-                  if (!geolocationLogged) {
-                    await api.post('/history', {
-                      author: userId,
-                      category: 'Login',
-                      content: 'Naver OAuth Login - location unavailable',
-                      relatedUsers: [userId],
-                    });
-
-                    await api.post('/activity-logs', {
-                      type: 'system',
-                      action: '로그인',
-                      description: 'Naver OAuth Login - 위치 정보 없음',
-                      priority: 2,
-                      status: 'success',
-                      details: {
-                        loginMethod: 'Naver OAuth',
-                        locationSource: 'unavailable'
-                      }
-                    });
-                  }
-                }
-              );
-            } else {
-              await api.post('/history', {
-                author: userId,
-                category: 'Login',
-                content: 'Naver OAuth Login - geolocation not supported',
-                relatedUsers: [userId],
-              });
-
-              await api.post('/activity-logs', {
-                type: 'system',
-                action: '로그인',
-                description: 'Naver OAuth Login - 위치 서비스 미지원',
-                priority: 2,
-                status: 'success',
-                details: {
-                  loginMethod: 'Naver OAuth',
-                  locationSource: 'not_supported'
-                }
-              });
-            }
-          } catch (logError) {
-            console.error('Login history logging failed:', logError);
+          // UserContext 업데이트
+          if (getUser) {
+            await getUser();
           }
 
           // 홈으로 리다이렉트
@@ -201,8 +115,9 @@ const NaverCallbackPage = () => {
       }
     };
 
-    processNaverCallback();
-  }, [searchParams, navigate]);
+    processCallback();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={{

@@ -16,6 +16,15 @@ const LoginPage = () => {
 
   const { from } = location.state || { from: { pathname: "/" } };
 
+  // location.state에서 에러가 있으면 표시
+  React.useEffect(() => {
+    if (location.state?.error) {
+      setError(location.state.error);
+      // 상태를 비워줌 (뒤로가기 시 중복 표시 방지)
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   // 네이버 로그인 시작
   const handleNaverLogin = () => {
     try {
@@ -29,8 +38,11 @@ const LoginPage = () => {
       // 랜덤 state 생성 (CSRF 방지)
       const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
-      // state를 sessionStorage에 저장
-      sessionStorage.setItem('naver_oauth_state', state);
+      // state를 localStorage에 저장 (더 안정적)
+      localStorage.setItem('naver_oauth_state', state);
+      sessionStorage.setItem('naver_oauth_state', state); // 호환성을 위해 둘 다 저장
+      
+      console.log('🔐 Naver OAuth State 저장:', state);
       
       // 네이버 인증 URL 생성
       const naverAuthURL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectURI}&state=${state}`;

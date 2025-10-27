@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Card, Button, Row, Col, Alert, Spinner, Badge } from 'react-bootstrap';
-import { FaRobot, FaCalendarWeek, FaCalendarDay, FaChartLine, FaCopy, FaCheck, FaClock, FaMapMarkerAlt, FaUser } from 'react-icons/fa';
+import { FaRobot, FaCalendarWeek, FaCalendarDay, FaCopy, FaCheck } from 'react-icons/fa';
 import { apiWithUnlimitedTimeout } from '../../../utils/api';
 
 const ScheduleBriefing = ({ user }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [briefingData, setBriefingData] = useState(null);
-    const [activeTab, setActiveTab] = useState('weekly');
+    const [activeTab, setActiveTab] = useState('daily');
     const [copiedText, setCopiedText] = useState('');
+    const [isFromCache, setIsFromCache] = useState(false);
 
     // 금주 브리핑 생성
     const generateWeeklyBriefing = async () => {
@@ -23,6 +24,7 @@ const ScheduleBriefing = ({ user }) => {
                     type: 'weekly',
                     data: response.data.data
                 });
+                setIsFromCache(response.data.isFromCache || false);
             } else {
                 setError('브리핑 생성에 실패했습니다.');
             }
@@ -47,36 +49,13 @@ const ScheduleBriefing = ({ user }) => {
                     type: 'daily',
                     data: response.data.data
                 });
+                setIsFromCache(response.data.isFromCache || false);
             } else {
                 setError('브리핑 생성에 실패했습니다.');
             }
         } catch (error) {
             console.error('일일 브리핑 생성 오류:', error);
             setError('브리핑 생성 중 오류가 발생했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 일정 분석 생성
-    const generateAnalysis = async () => {
-        try {
-            setLoading(true);
-            setError('');
-
-            const response = await apiWithUnlimitedTimeout.get('/schedule-briefing/analysis');
-
-            if (response.data.success) {
-                setBriefingData({
-                    type: 'analysis',
-                    data: response.data.data
-                });
-            } else {
-                setError('분석 생성에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('일정 분석 생성 오류:', error);
-            setError('분석 생성 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
@@ -98,6 +77,7 @@ const ScheduleBriefing = ({ user }) => {
         setActiveTab(tab);
         setBriefingData(null);
         setError('');
+        setIsFromCache(false);
     };
 
     // 브리핑 생성 핸들러
@@ -108,9 +88,6 @@ const ScheduleBriefing = ({ user }) => {
                 break;
             case 'daily':
                 generateDailyBriefing();
-                break;
-            case 'analysis':
-                generateAnalysis();
                 break;
             default:
                 break;
@@ -160,13 +137,6 @@ const ScheduleBriefing = ({ user }) => {
                             <FaCalendarDay className="me-2" />
                             오늘 브리핑
                         </button>
-                        <button
-                            className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
-                            onClick={() => handleTabChange('analysis')}
-                        >
-                            <FaChartLine className="me-2" />
-                            일정 분석
-                        </button>
                     </div>
                 </div>
 
@@ -179,7 +149,7 @@ const ScheduleBriefing = ({ user }) => {
                         variant="primary"
                         size="lg"
                         onClick={handleGenerateBriefing}
-                        disabled={loading}
+                        disabled={loading || isFromCache}
                         className="px-4"
                     >
                         {loading ? (
@@ -187,12 +157,17 @@ const ScheduleBriefing = ({ user }) => {
                                 <Spinner size="sm" className="me-2" />
                                 AI가 깊이 있게 분석 중입니다... (시간 제한 없음)
                             </>
+                        ) : isFromCache ? (
+                            <>
+                                <FaRobot className="me-2" />
+                                {activeTab === 'weekly' && '오늘의 금주 브리핑 (이미 생성됨)'}
+                                {activeTab === 'daily' && '오늘의 브리핑 (이미 생성됨)'}
+                            </>
                         ) : (
                             <>
                                 <FaRobot className="me-2" />
                                 {activeTab === 'weekly' && '금주 브리핑 생성'}
                                 {activeTab === 'daily' && '오늘 브리핑 생성'}
-                                {activeTab === 'analysis' && '일정 분석 생성'}
                             </>
                         )}
                     </Button>
@@ -207,10 +182,9 @@ const ScheduleBriefing = ({ user }) => {
                                     <h5 className="mb-0">
                                         {briefingData.type === 'weekly' && '📅 금주 업무 브리핑'}
                                         {briefingData.type === 'daily' && '🌅 오늘의 업무 브리핑'}
-                                        {briefingData.type === 'analysis' && '📊 일정 분석 보고서'}
                                     </h5>
                                     <small className="text-muted">
-                                        글자 수: {(briefingData.data.briefing || briefingData.data.analysis || '').length}자
+                                        글자 수: {(briefingData.data.briefing || '').length}자
                                         {briefingData.type === 'weekly' && ' (목표: 1300자 이내)'}
                                         {briefingData.type === 'daily' && ' (목표: 600자 이내)'}
                                     </small>
@@ -219,7 +193,7 @@ const ScheduleBriefing = ({ user }) => {
                                     <Button
                                         variant="outline-secondary"
                                         size="sm"
-                                        onClick={() => copyToClipboard(briefingData.data.briefing || briefingData.data.analysis)}
+                                        onClick={() => copyToClipboard(briefingData.data.briefing)}
                                     >
                                         {copiedText ? (
                                             <>
@@ -245,7 +219,7 @@ const ScheduleBriefing = ({ user }) => {
                                     fontSize: '14px'
                                 }}
                             >
-                                {briefingData.data.briefing || briefingData.data.analysis}
+                                {briefingData.data.briefing}
                             </div>
                         </Card.Body>
                     </Card>

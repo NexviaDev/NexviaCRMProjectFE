@@ -127,10 +127,9 @@ const ScheduleManagement = () => {
     const handleDateDoubleClick = (date) => {
         // 선택된 날짜를 설정하고 일정 등록 모달 열기
         viewMode.setSelectedDate(date);
-        handleShowModal({ 
-            date: date.toISOString().split('T')[0], // YYYY-MM-DD 형식
-            time: '09:00' // 기본 시간 설정
-        });
+        // 새로운 일정 등록을 위해 null 전달
+        setEditingSchedule(null);
+        setShowModal(true);
     };
 
     // user가 로드되지 않은 경우 로딩 표시
@@ -149,8 +148,8 @@ const ScheduleManagement = () => {
         );
     }
 
-    // level 2 이하인 경우 접근 제한
-    if (user.level <= 2) {
+    // level 1 이하인 경우 접근 제한 (레벨 2부터 허용)
+    if (user.level <= 1) {
         return (
             <Container className="mt-4">
                 <Card className="shadow-sm">
@@ -366,6 +365,7 @@ const ScheduleManagement = () => {
                 editingSchedule={editingSchedule}
                 onSuccess={handleSuccess}
                 user={user}
+                selectedDate={viewMode.selectedDate}
             />
 
             {/* 메시지 추천 모달 */}
