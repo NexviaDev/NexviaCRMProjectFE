@@ -40,7 +40,9 @@ const LoginPage = () => {
       }
       // 현재 도메인에 따라 콜백 URL 동적 설정
       const currentOrigin = window.location.origin;
-      const redirectURI = encodeURIComponent(`${currentOrigin}/auth/naver/callback`);
+      const redirectURI = encodeURIComponent(
+        process.env.REACT_APP_NAVER_REDIRECT_URI || `${currentOrigin}/auth/naver/callback`
+      );
       
       // 랜덤 state 생성 (CSRF 방지)
       const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);

@@ -62,7 +62,8 @@ const NaverCallbackPage = () => {
         // 백엔드에 네이버 로그인 요청
         const response = await api.post('/user/naver-login', {
           code,
-          state
+          state,
+          redirectUri: (process.env.REACT_APP_NAVER_REDIRECT_URI || `${window.location.origin}/auth/naver/callback`)
         });
 
         console.log('✅ Naver 로그인 응답:', response.data);
