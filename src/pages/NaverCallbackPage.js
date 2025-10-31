@@ -59,6 +59,18 @@ const NaverCallbackPage = () => {
           return;
         }
 
+        // CSRF 방지: state 검증
+        const savedState = localStorage.getItem('naver_oauth_state') || sessionStorage.getItem('naver_oauth_state');
+        if (!savedState || savedState !== state) {
+          console.error('Invalid state parameter');
+          navigate('/login', {
+            state: {
+              error: '보안 검증 실패: 상태 토큰이 일치하지 않습니다.'
+            }
+          });
+          return;
+        }
+
         // 백엔드에 네이버 로그인 요청
         const response = await api.post('/user/naver-login', {
           code,
@@ -105,9 +117,18 @@ const NaverCallbackPage = () => {
 
           // 홈으로 리다이렉트
           navigate('/');
+        } else {
+          console.error('Unexpected response:', response.status, response.data);
+          navigate('/login', { 
+            state: { 
+              error: '네이버 로그인 응답이 올바르지 않습니다.' 
+            } 
+          });
+          return;
         }
       } catch (error) {
         console.error('Naver callback processing error:', error);
+        try { alert(error.response?.data?.message || error.message || '네이버 로그인 처리 중 오류가 발생했습니다.'); } catch (_) {}
         navigate('/login', { 
           state: { 
             error: error.response?.data?.message || '네이버 로그인 처리 중 오류가 발생했습니다.' 
