@@ -32,7 +32,12 @@ const LoginPage = () => {
       setError('');
 
       // 클라이언트 ID와 콜백 URL 설정
-      const clientId = 'xgrVE4stsM0zDg17E7eU';
+      const clientId = process.env.REACT_APP_NAVER_CLIENT_ID;
+      if (!clientId) {
+        setError('네이버 클라이언트 ID가 설정되지 않았습니다.');
+        setNaverLoading(false);
+        return;
+      }
       // 현재 도메인에 따라 콜백 URL 동적 설정
       const currentOrigin = window.location.origin;
       const redirectURI = encodeURIComponent(`${currentOrigin}/auth/naver/callback`);

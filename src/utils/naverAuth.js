@@ -2,7 +2,10 @@
 
 // 네이버 로그인 URL 생성
 export const generateNaverLoginUrl = () => {
-  const clientId = 'xgrVE4stsM0zDg17E7eU';
+  const clientId = process.env.REACT_APP_NAVER_CLIENT_ID;
+  if (!clientId) {
+    throw new Error('REACT_APP_NAVER_CLIENT_ID 환경 변수가 설정되지 않았습니다.');
+  }
   const redirectUri = encodeURIComponent(`${window.location.origin}/auth/naver/callback`);
   const state = generateRandomState();
   
@@ -39,11 +42,18 @@ export const openNaverLoginPopup = () => {
 // 네이버 사용자 프로필 조회
 export const getNaverUserProfile = async (accessToken) => {
   try {
+    const clientId = process.env.REACT_APP_NAVER_CLIENT_ID;
+    const clientSecret = process.env.REACT_APP_NAVER_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+      throw new Error('네이버 OAuth 환경 변수가 설정되지 않았습니다.');
+    }
+    
     const response = await fetch('https://openapi.naver.com/v1/nid/me', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'X-Naver-Client-Id': 'xgrVE4stsM0zDg17E7eU',
-        'X-Naver-Client-Secret': 'IwpOF9AOUK'
+        'X-Naver-Client-Id': clientId,
+        'X-Naver-Client-Secret': clientSecret
       }
     });
     

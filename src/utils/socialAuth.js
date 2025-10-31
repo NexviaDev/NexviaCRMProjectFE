@@ -3,7 +3,10 @@ const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || 'your-google-
 const getGoogleRedirectURI = () => process.env.REACT_APP_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/google/callback`;
 
 // Naver OAuth 설정
-const NAVER_CLIENT_ID = process.env.REACT_APP_NAVER_CLIENT_ID || 'your-naver-client-id';
+const NAVER_CLIENT_ID = process.env.REACT_APP_NAVER_CLIENT_ID;
+if (!NAVER_CLIENT_ID) {
+  console.error('REACT_APP_NAVER_CLIENT_ID 환경 변수가 설정되지 않았습니다.');
+}
 const getNaverRedirectURI = () => process.env.REACT_APP_NAVER_REDIRECT_URI || `${window.location.origin}/auth/naver/callback`;
 
 // Google 로그인
@@ -21,6 +24,10 @@ export const googleLogin = () => {
 
 // Naver 로그인
 export const naverLogin = () => {
+  if (!NAVER_CLIENT_ID) {
+    throw new Error('REACT_APP_NAVER_CLIENT_ID 환경 변수가 설정되지 않았습니다.');
+  }
+  
   const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?` +
     `response_type=code` +
     `&client_id=${NAVER_CLIENT_ID}` +
