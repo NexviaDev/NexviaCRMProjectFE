@@ -10,6 +10,10 @@ const NaverCallbackPage = () => {
   const hasProcessed = useRef(false);
 
   useEffect(() => {
+    console.log('🚀 NaverCallbackPage 컴포넌트 마운트됨');
+    console.log('📍 현재 URL:', window.location.href);
+    console.log('📍 searchParams:', Object.fromEntries(searchParams.entries()));
+    
     // code가 없으면 처리하지 않음
     const code = searchParams.get('code');
     if (!code) {
@@ -138,8 +142,7 @@ const NaverCallbackPage = () => {
     };
 
     processCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, navigate, getUser]);
 
   return (
     <div style={{
