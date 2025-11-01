@@ -99,12 +99,8 @@ const AppRoutes = () => {
         <Route path="/auth/naver/callback" element={<NaverCallbackPage />} />
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
         
-        {/* 홈 라우트 - 로그인 필요 */}
-        <Route path="/" element={
-          <ProtectedRoute user={user}>
-            <Home />
-          </ProtectedRoute>
-        } />
+        {/* 홈 라우트 - 로그인 없이도 접근 가능 */}
+        <Route path="/" element={<Home />} />
         
         {/* 부동산 CRM 라우트들 - 구독 상태 확인 */}
         <Route path="/properties" element={

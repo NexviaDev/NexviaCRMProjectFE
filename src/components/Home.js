@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Container, Row, Col, Card, Button, Badge, ListGroup, Pagination } from 'react-bootstrap';
-import { FaHome, FaUsers, FaFileAlt, FaCalendarAlt, FaChartLine, FaCog, FaPlus, FaSearch, FaMoneyBillWave, FaClock, FaMapMarkerAlt, FaUser, FaHome as FaHomeIcon, FaBuilding } from 'react-icons/fa';
+import { FaHome, FaUsers, FaFileAlt, FaCalendarAlt, FaChartLine, FaMoneyBillWave, FaClock, FaMapMarkerAlt, FaUser, FaHome as FaHomeIcon } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import ScheduleRegistrationModal from './ScheduleManagement/ScheduleRegistrationModal';
@@ -10,9 +10,8 @@ import { UserContext } from './UserContext';
 
 const Home = () => {
     const { user } = useContext(UserContext);
-    const [isMobile, setIsMobile] = useState(false);
     const [todaySchedules, setTodaySchedules] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
     const [showScheduleModal, setShowScheduleModal] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [showCompanyInfoModal, setShowCompanyInfoModal] = useState(false);
@@ -235,42 +234,25 @@ const Home = () => {
     };
 
     useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-
-        // 통계 데이터, 오늘의 스케줄과 최근 활동 가져오기 (병렬 처리로 최적화)
+        // 뉴스는 게스트 사용자도 볼 수 있도록 항상 로드
+        fetchLatestNews();
+        
+        // 통계 데이터, 오늘의 스케줄과 최근 활동 가져오기 (로그인한 사용자만)
         if (user && user._id) {
-            // 모든 API 호출을 병렬로 실행
+            // 로그인한 사용자만 API 호출을 병렬로 실행
             Promise.all([
                 fetchStats(),
                 fetchTodaySchedules(),
-                fetchRecentActivities(),
-                fetchLatestNews()
+                fetchRecentActivities()
             ]).catch(error => {
                 console.error('데이터 로딩 중 오류 발생:', error);
             });
         }
-
-        return () => window.removeEventListener('resize', handleResize);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    // 사용자 정보가 없을 때 로딩 상태 표시 (리다이렉트 중일 때)
-    if (!user || !user._id) {
-        return (
-            <Container className="mt-4">
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3 text-muted">로그인 페이지로 이동 중...</p>
-                </div>
-            </Container>
-        );
-    }
+    // 로그인하지 않은 사용자에게 기본 홈 화면 표시
+    const isGuest = !user || !user._id;
 
     const getStatusBadge = (status) => {
         return <Badge bg={status === '완료' ? 'success' : 'warning'}>{status}</Badge>;
@@ -327,11 +309,44 @@ const Home = () => {
                     <Row className="align-items-center">
                         <Col md={8}>
                             <h3 className="mb-2">
-                                안녕하세요, {user?.nickname || '중개사'}님!
+                                {isGuest ? (
+                                    <>
+                                        부동산 CRM 시스템에 오신 것을 환영합니다!
+                                    </>
+                                ) : (
+                                    <>
+                                        안녕하세요, {user?.nickname || '중개사'}님!
+                                    </>
+                                )}
                             </h3>
                             <p className="mb-0">
-                                오늘도 부동산 중개 업무에 열정을 가져주세요.
+                                {isGuest ? (
+                                    <>
+                                        효율적인 부동산 중개업무를 위한 종합 관리 시스템입니다. 로그인하여 더 많은 기능을 이용해보세요.
+                                    </>
+                                ) : (
+                                    <>
+                                        오늘도 부동산 중개 업무에 열정을 가져주세요.
+                                    </>
+                                )}
                             </p>
+                            {isGuest && (
+                                <div className="mt-3">
+                                    <Button 
+                                        variant="light" 
+                                        onClick={() => navigate('/login')}
+                                        className="me-2"
+                                    >
+                                        로그인
+                                    </Button>
+                                    <Button 
+                                        variant="outline-light" 
+                                        onClick={() => navigate('/register')}
+                                    >
+                                        회원가입
+                                    </Button>
+                                </div>
+                            )}
                         </Col>
                         <Col md={4} className="text-end">
                             <div className="d-flex justify-content-end">
@@ -347,36 +362,51 @@ const Home = () => {
                 <Col md={12} className="mb-3">
                     <div className="d-flex justify-content-between align-items-center">
                         <h5 className="mb-0">📊 실시간 통계</h5>
-                        <Button
-                            variant="outline-secondary"
-                            size="sm"
-                            onClick={fetchStats}
-                            disabled={Object.values(statsLoading).some(loading => loading)}
-                        >
-                            {Object.values(statsLoading).some(loading => loading) ? (
-                                <>
-                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    새로고침 중...
-                                </>
-                            ) : (
-                                <>
-                                    <FaChartLine className="me-2" />
-                                    새로고침
-                                </>
-                            )}
-                        </Button>
+                        {!isGuest && (
+                            <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={fetchStats}
+                                disabled={Object.values(statsLoading).some(loading => loading)}
+                            >
+                                {Object.values(statsLoading).some(loading => loading) ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        새로고침 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaChartLine className="me-2" />
+                                        새로고침
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </div>
                 </Col>
                 <Col md={2} sm={6} className="mb-3">
                     <Card 
                         className="text-center border-primary h-100 transition-all"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/properties')}
+                        onClick={() => {
+                            if (isGuest) {
+                                navigate('/login');
+                            } else {
+                                navigate('/properties');
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <Card.Body className="d-flex flex-column justify-content-center">
-                            {statsLoading.totalProperties ? (
+                            {isGuest ? (
+                                <>
+                                    <FaHome size={32} className="text-primary mb-2" />
+                                    <h5>총 매물</h5>
+                                    <h3 className="text-primary">-</h3>
+                                    <small className="text-muted">로그인 필요</small>
+                                </>
+                            ) : statsLoading.totalProperties ? (
                                 <div className="text-center">
                                     <div className="spinner-border spinner-border-sm text-primary" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -396,12 +426,25 @@ const Home = () => {
                     <Card 
                         className="text-center border-success h-100 transition-all"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/customers/buyers')}
+                        onClick={() => {
+                            if (isGuest) {
+                                navigate('/login');
+                            } else {
+                                navigate('/customers/buyers');
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <Card.Body className="d-flex flex-column justify-content-center">
-                            {statsLoading.activeCustomers ? (
+                            {isGuest ? (
+                                <>
+                                    <FaUsers size={32} className="text-success mb-2" />
+                                    <h5>활성 고객</h5>
+                                    <h3 className="text-success">-</h3>
+                                    <small className="text-muted">로그인 필요</small>
+                                </>
+                            ) : statsLoading.activeCustomers ? (
                                 <div className="text-center">
                                     <div className="spinner-border spinner-border-sm text-success" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -421,12 +464,25 @@ const Home = () => {
                     <Card 
                         className="text-center border-warning h-100 transition-all"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/contracts')}
+                        onClick={() => {
+                            if (isGuest) {
+                                navigate('/login');
+                            } else {
+                                navigate('/contracts');
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <Card.Body className="d-flex flex-column justify-content-center">
-                            {statsLoading.pendingContracts ? (
+                            {isGuest ? (
+                                <>
+                                    <FaFileAlt size={32} className="text-warning mb-2" />
+                                    <h5>진행 계약</h5>
+                                    <h3 className="text-warning">-</h3>
+                                    <small className="text-muted">로그인 필요</small>
+                                </>
+                            ) : statsLoading.pendingContracts ? (
                                 <div className="text-center">
                                     <div className="spinner-border spinner-border-sm text-warning" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -446,12 +502,25 @@ const Home = () => {
                     <Card 
                         className="text-center border-info h-100 transition-all"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/sales')}
+                        onClick={() => {
+                            if (isGuest) {
+                                navigate('/login');
+                            } else {
+                                navigate('/sales');
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <Card.Body className="d-flex flex-column justify-content-center">
-                            {statsLoading.monthlyRevenue ? (
+                            {isGuest ? (
+                                <>
+                                    <FaMoneyBillWave size={32} className="text-info mb-2" />
+                                    <h5>월 매출</h5>
+                                    <h3 className="text-info">-</h3>
+                                    <small className="text-muted">로그인 필요</small>
+                                </>
+                            ) : statsLoading.monthlyRevenue ? (
                                 <div className="text-center">
                                     <div className="spinner-border spinner-border-sm text-info" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -471,12 +540,25 @@ const Home = () => {
                     <Card 
                         className="text-center border-secondary h-100 transition-all"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/sales')}
+                        onClick={() => {
+                            if (isGuest) {
+                                navigate('/login');
+                            } else {
+                                navigate('/sales');
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <Card.Body className="d-flex flex-column justify-content-center">
-                            {statsLoading.completedDeals ? (
+                            {isGuest ? (
+                                <>
+                                    <FaChartLine size={32} className="text-secondary mb-2" />
+                                    <h5>완료 거래</h5>
+                                    <h3 className="text-secondary">-</h3>
+                                    <small className="text-muted">로그인 필요</small>
+                                </>
+                            ) : statsLoading.completedDeals ? (
                                 <div className="text-center">
                                     <div className="spinner-border spinner-border-sm text-secondary" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -496,12 +578,25 @@ const Home = () => {
                     <Card 
                         className="text-center border-danger h-100 transition-all"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/schedule')}
+                        onClick={() => {
+                            if (isGuest) {
+                                navigate('/login');
+                            } else {
+                                navigate('/schedule');
+                            }
+                        }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                     >
                         <Card.Body className="d-flex flex-column justify-content-center">
-                            {statsLoading.upcomingAppointments ? (
+                            {isGuest ? (
+                                <>
+                                    <FaClock size={32} className="text-danger mb-2" />
+                                    <h5>예정 일정</h5>
+                                    <h3 className="text-danger">-</h3>
+                                    <small className="text-muted">로그인 필요</small>
+                                </>
+                            ) : statsLoading.upcomingAppointments ? (
                                 <div className="text-center">
                                     <div className="spinner-border spinner-border-sm text-danger" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -528,16 +623,29 @@ const Home = () => {
                                 <FaCalendarAlt className="me-2" />
                                 오늘의 할 일
                             </h5>
-                            <Button
-                                variant="outline-primary"
-                                size="sm"
-                                onClick={() => navigate('/schedule')}
-                            >
-                                전체 보기
-                            </Button>
+                            {!isGuest && (
+                                <Button
+                                    variant="outline-primary"
+                                    size="sm"
+                                    onClick={() => navigate('/schedule')}
+                                >
+                                    전체 보기
+                                </Button>
+                            )}
                         </Card.Header>
                         <Card.Body>
-                            {loading ? (
+                            {isGuest ? (
+                                <div className="text-center py-4">
+                                    <FaCalendarAlt size={48} className="text-muted mb-3" />
+                                    <p className="text-muted mb-3">로그인하여 오늘의 일정을 확인하세요.</p>
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => navigate('/login')}
+                                    >
+                                        로그인하기
+                                    </Button>
+                                </div>
+                            ) : loading ? (
                                 <div className="text-center py-4">
                                     <div className="spinner-border" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -673,7 +781,12 @@ const Home = () => {
                             </h5>
                         </Card.Header>
                         <Card.Body>
-                            {loading ? (
+                            {isGuest ? (
+                                <div className="text-center py-3">
+                                    <FaClock size={24} className="text-muted mb-2" />
+                                    <p className="text-muted mb-0">로그인하여 최근 활동을 확인하세요.</p>
+                                </div>
+                            ) : loading ? (
                                 <div className="text-center py-3">
                                     <div className="spinner-border spinner-border-sm" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -742,28 +855,30 @@ const Home = () => {
                         <Card.Header>
                             <div className="d-flex justify-content-between align-items-center">
                                 <h5 className="mb-0">📰 최신 뉴스</h5>
-                                <Button
-                                    variant="outline-secondary"
-                                    size="sm"
-                                    onClick={fetchLatestNews}
-                                    disabled={newsLoading}
-                                >
-                                    {newsLoading ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            새로고침 중...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FaChartLine className="me-2" />
-                                            새로고침
-                                        </>
-                                    )}
-                                </Button>
+                                {!isGuest && (
+                                    <Button
+                                        variant="outline-secondary"
+                                        size="sm"
+                                        onClick={fetchLatestNews}
+                                        disabled={newsLoading}
+                                    >
+                                        {newsLoading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                새로고침 중...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaChartLine className="me-2" />
+                                                새로고침
+                                            </>
+                                        )}
+                                    </Button>
+                                )}
                             </div>
                         </Card.Header>
                         <Card.Body>
-                            {newsLoading ? (
+                            {newsLoading && !isGuest ? (
                                 <div className="text-center py-4">
                                     <div className="spinner-border text-primary" role="status">
                                         <span className="visually-hidden">Loading...</span>
